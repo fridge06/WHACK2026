@@ -1,0 +1,557 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Launch Day Alpha</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,800&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    color-scheme: light;
+    --bg: #F4F2FB;
+    --surface: #FFFFFF;
+    --ink: #19132F;
+    --muted: #5D5779;
+    --grid: #E4E0F1;
+    --axis: #BDB7D3;
+    --pop: #D2366F;
+    --pop-fill: rgba(210, 54, 111, 0.15);
+    --mv: #2D56E6;
+    --gap: rgba(45, 86, 230, 0.13);
+    --bench: #857FA0;
+    --focus: #2D56E6;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      color-scheme: dark;
+      --bg: #140E2B;
+      --surface: #1C1539;
+      --ink: #F2EFFC;
+      --muted: #A8A1C7;
+      --grid: #2D2551;
+      --axis: #4A4170;
+      --pop: #FF5E95;
+      --pop-fill: rgba(255, 94, 149, 0.17);
+      --mv: #7598FF;
+      --gap: rgba(117, 152, 255, 0.17);
+      --bench: #8F88B2;
+      --focus: #7598FF;
+    }
+  }
+
+  * { box-sizing: border-box; }
+  html, body { margin: 0; }
+  body {
+    background: var(--bg);
+    color: var(--ink);
+    font-family: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    font-variant-numeric: tabular-nums;
+    line-height: 1.5;
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+  /* The two series colours, joined: players (pink) and market value (blue). */
+  .strip { height: 4px; background: linear-gradient(90deg, var(--mv), var(--pop)); margin-top: env(safe-area-inset-top, 0px); }
+
+  .wrap { max-width: 1080px; margin: 0 auto; padding: 28px clamp(16px, 4vw, 40px) 48px; }
+
+  header { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px 24px; flex-wrap: wrap; }
+  .brand { font-family: "Bricolage Grotesque", "Arial Narrow", system-ui, sans-serif; font-weight: 800; font-size: 1.35rem; margin: 0; letter-spacing: -0.01em; }
+  .lede { color: var(--muted); margin: 2px 0 0; max-width: 58ch; }
+  .badge { border: 1px solid var(--axis); border-radius: 999px; padding: 3px 12px; font-size: 0.8rem; color: var(--muted); white-space: nowrap; }
+
+  .stage { margin-top: 28px; background: var(--surface); border-radius: 20px; padding: clamp(18px, 3.2vw, 40px); }
+
+  .title {
+    font-family: "Bricolage Grotesque", "Arial Narrow", system-ui, sans-serif;
+    font-weight: 800;
+    font-size: clamp(2.3rem, 6.4vw, 5rem);
+    line-height: 0.95;
+    letter-spacing: -0.025em;
+    margin: 0;
+  }
+  .meta { color: var(--muted); margin: 14px 0 0; }
+  .verdict { font-size: clamp(1.05rem, 2vw, 1.3rem); margin: 10px 0 0; max-width: 52ch; line-height: 1.4; }
+  .verdict strong { font-weight: 600; }
+
+  .swap { animation: swapIn 0.45s ease both; }
+  @keyframes swapIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+
+  .chart { position: relative; margin-top: 26px; touch-action: pan-y; }
+  .chart svg { display: block; width: 100%; height: auto; overflow: visible; }
+  .chart text { font-family: inherit; font-size: 12px; fill: var(--muted); }
+  .chart .axis-title-pop { fill: var(--pop); font-weight: 600; }
+  .chart .axis-title-mv { fill: var(--mv); font-weight: 600; }
+  .chart .launch-label { fill: var(--ink); font-weight: 600; }
+
+  .tooltip {
+    position: absolute; top: 0; left: 0; pointer-events: none;
+    background: var(--ink); color: var(--bg);
+    padding: 8px 11px; border-radius: 8px; font-size: 0.8rem; line-height: 1.45;
+    opacity: 0; transition: opacity 0.12s; white-space: nowrap; z-index: 2;
+  }
+  .tooltip b { font-weight: 600; }
+
+  .legend { display: flex; flex-wrap: wrap; gap: 6px 22px; margin: 14px 0 0; padding: 0; list-style: none; font-size: 0.875rem; color: var(--muted); }
+  .legend li { display: flex; align-items: center; gap: 8px; }
+  .key { display: inline-block; width: 22px; height: 12px; border-radius: 2px; }
+  .key-pop { background: var(--pop-fill); border-top: 2px solid var(--pop); }
+  .key-mv { height: 0; border-top: 3px solid var(--mv); }
+  .key-bench { height: 0; border-top: 2px dashed var(--bench); }
+  .key-gap { background: var(--gap); }
+
+  .controls { display: flex; align-items: stretch; gap: 10px; margin-top: 26px; }
+  .tabs { display: flex; gap: 4px; flex: 1; overflow-x: auto; scrollbar-width: thin; }
+  .tab {
+    flex: 1 0 auto; position: relative;
+    background: none; border: 0; border-radius: 8px; cursor: pointer;
+    color: var(--muted); font: inherit; font-size: 0.9rem; text-align: left;
+    padding: 10px 12px 16px;
+  }
+  .tab:hover { color: var(--ink); }
+  .tab[aria-selected="true"] { color: var(--ink); font-weight: 600; }
+  .tab .bar { position: absolute; left: 12px; right: 12px; bottom: 6px; height: 3px; background: var(--grid); border-radius: 2px; overflow: hidden; }
+  .tab .fill { display: block; height: 100%; width: 0; background: linear-gradient(90deg, var(--mv), var(--pop)); }
+  .pause {
+    flex: none; background: none; color: var(--ink); font: inherit; font-size: 0.85rem;
+    border: 1px solid var(--axis); border-radius: 8px; padding: 0 14px; cursor: pointer;
+  }
+  .pause:hover { border-color: var(--muted); }
+  :focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+
+  .note { color: var(--muted); font-size: 0.8rem; margin: 22px 0 0; max-width: 80ch; }
+
+  @media (max-width: 640px) {
+    .controls { flex-direction: column; }
+    .pause { padding: 10px 14px; align-self: flex-start; }
+    .tab { flex: 0 0 auto; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .swap { animation: none; }
+    .tooltip { transition: none; }
+  }
+</style>
+</head>
+<body>
+<div class="strip" aria-hidden="true"></div>
+<div class="wrap">
+  <header>
+    <div>
+      <p class="brand">Launch Day Alpha</p>
+      <p class="lede">When a game opens a new world, players flood in. Does the company behind it gain or lose value?</p>
+    </div>
+    <span class="badge">Placeholder data</span>
+  </header>
+
+  <main class="stage" id="stage">
+    <div id="copy">
+      <h1 class="title" id="title"></h1>
+      <p class="meta" id="meta"></p>
+      <p class="verdict" id="verdict"></p>
+    </div>
+
+    <div class="chart" id="chart">
+      <svg id="svg" role="img" aria-labelledby="svgDesc"><desc id="svgDesc"></desc></svg>
+      <div class="tooltip" id="tooltip" aria-hidden="true"></div>
+    </div>
+
+    <ul class="legend">
+      <li><span class="key key-pop"></span>Steam reviews per day (left axis)</li>
+      <li><span class="key key-mv"></span>Market value (right axis)</li>
+      <li><span class="key key-bench"></span>Value if it had moved with its market index</li>
+      <li><span class="key key-gap"></span>Value the launch created or lost</li>
+    </ul>
+
+    <div class="controls">
+      <div class="tabs" id="tabs" role="tablist" aria-label="Game launches"></div>
+      <button class="pause" id="pause" type="button" aria-pressed="false">Pause rotation</button>
+    </div>
+  </main>
+
+  <p class="note">Every figure on this page is generated placeholder data for layout only. It is not real Steam, stock market or company data. Replace <code>GAMES</code> in the script with the JSON produced by your data pipeline. Markets close at weekends, so Friday’s value is carried across Saturday and Sunday.</p>
+</div>
+
+<script>
+/* ------------------------------------------------------------------
+   DATA
+   Swap buildPlaceholderGames() for real data with this shape:
+   {
+     name, publisher, city, ticker, launch: "YYYY-MM-DD",
+     series: [ { d: -30..60, date: Date, reviews: number|null,
+                 mv: £bn, implied: £bn }, ... ]
+   }
+   d = days from launch. reviews is null before launch.
+   implied = launch-day value scaled by the market index's move.
+------------------------------------------------------------------- */
+const DAY_MIN = -30, DAY_MAX = 60, ROTATE_MS = 9000;
+
+// Placeholder storylines only. Launch dates and tickers should be checked
+// before real data goes in; the numbers are invented.
+const CONFIG = [
+  { name: "Cyberpunk 2077", publisher: "CD Projekt", city: "Warsaw", ticker: "CDR", launch: "2020-12-10",
+    mv0: 7.5, peak: 40000, tau: 9,
+    path: [[-30, -0.10], [0, 0], [2, -0.08], [7, -0.22], [14, -0.30], [30, -0.33], [60, -0.30]] },
+  { name: "Elden Ring", publisher: "Bandai Namco", city: "Tokyo", ticker: "7832", launch: "2022-02-25",
+    mv0: 11, peak: 30000, tau: 22,
+    path: [[-30, -0.04], [0, 0], [5, 0.05], [14, 0.08], [60, 0.11]] },
+  { name: "Monster Hunter Wilds", short: "MH Wilds", publisher: "Capcom", city: "Tokyo", ticker: "9697", launch: "2025-02-28",
+    mv0: 9, peak: 45000, tau: 7,
+    path: [[-30, -0.07], [0, 0], [3, 0.03], [10, -0.04], [30, -0.10], [60, -0.14]] },
+  { name: "Cities: Skylines II", publisher: "Paradox Interactive", city: "Stockholm", ticker: "PDX", launch: "2023-10-24",
+    mv0: 2.0, peak: 9000, tau: 6,
+    path: [[-30, -0.02], [0, 0], [3, -0.09], [14, -0.15], [60, -0.12]] },
+  { name: "Frostpunk 2", publisher: "11 bit studios", city: "Warsaw", ticker: "11B", launch: "2024-09-20",
+    mv0: 0.12, peak: 5000, tau: 8,
+    path: [[-30, 0.03], [0, 0], [2, -0.12], [7, -0.20], [30, -0.25], [60, -0.22]] },
+  { name: "Kingdom Come: Deliverance II", short: "Kingdom Come II", publisher: "Embracer Group", city: "Stockholm", ticker: "EMBRAC B", launch: "2025-02-04",
+    mv0: 2.2, peak: 25000, tau: 18,
+    path: [[-30, -0.05], [0, 0], [4, 0.08], [14, 0.14], [60, 0.16]] }
+];
+
+function mulberry32(a) {
+  return function () {
+    a |= 0; a = a + 0x6D2B79F5 | 0;
+    let t = Math.imul(a ^ a >>> 15, 1 | a);
+    t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t;
+    return ((t ^ t >>> 14) >>> 0) / 4294967296;
+  };
+}
+function gauss(rng) {
+  let u = 0, v = 0;
+  while (u === 0) u = rng();
+  while (v === 0) v = rng();
+  return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * v);
+}
+function interp(points, d) {
+  if (d <= points[0][0]) return points[0][1];
+  for (let i = 1; i < points.length; i++) {
+    if (d <= points[i][0]) {
+      const [x0, y0] = points[i - 1], [x1, y1] = points[i];
+      return y0 + (y1 - y0) * (d - x0) / (x1 - x0);
+    }
+  }
+  return points[points.length - 1][1];
+}
+
+function buildPlaceholderGames() {
+  return CONFIG.map((cfg, gi) => {
+    const rng = mulberry32(1000 + gi * 97);
+    const launch = new Date(cfg.launch + "T00:00:00Z");
+    let index = 1, wobble = 0, abn = cfg.path[0][1];
+    const raw = [];
+    for (let d = DAY_MIN; d <= DAY_MAX; d++) {
+      const date = new Date(launch.getTime() + d * 86400000);
+      const wd = date.getUTCDay();
+      if (wd !== 0 && wd !== 6) {               // trading day: values move
+        index *= 1 + gauss(rng) * 0.008;
+        wobble = wobble * 0.7 + gauss(rng) * 0.012;
+        abn = interp(cfg.path, d);
+      }                                          // weekend: carry forward
+      let reviews = null;
+      if (d >= 0) {
+        const weekend = (wd === 0 || wd === 6) ? 1.15 : 1;
+        const firstDay = d === 0 ? 0.75 : 1;
+        reviews = Math.max(cfg.peak * 0.01, cfg.peak * Math.exp(-d / cfg.tau) * weekend * firstDay * (1 + gauss(rng) * 0.08));
+        reviews = Math.round(reviews);
+      }
+      raw.push({ d, date, reviews, index, wobble, abn });
+    }
+    const at0 = raw.find(p => p.d === 0);
+    const series = raw.map(p => {
+      const implied = cfg.mv0 * (p.index / at0.index);
+      const mv = implied * (1 + p.abn) * (1 + p.wobble - at0.wobble);
+      return { d: p.d, date: p.date, reviews: p.reviews, mv, implied };
+    });
+    return { ...cfg, series };
+  });
+}
+
+const GAMES = buildPlaceholderGames();
+
+/* ------------------------------------------------------------------
+   FORMATTING
+------------------------------------------------------------------- */
+const nf0 = new Intl.NumberFormat("en-GB", { maximumFractionDigits: 0 });
+const nf1 = new Intl.NumberFormat("en-GB", { maximumFractionDigits: 1 });
+const nf2 = new Intl.NumberFormat("en-GB", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+function money(bn) {
+  const a = Math.abs(bn);
+  return a >= 1 ? "£" + nf1.format(a) + "bn" : "£" + nf0.format(a * 1000) + "m";
+}
+function moneyPrecise(bn) {
+  return bn >= 1 ? "£" + nf2.format(bn) + "bn" : "£" + nf0.format(bn * 1000) + "m";
+}
+function fmtDate(date) {
+  return date.toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric", timeZone: "UTC" });
+}
+function dayLabel(d) {
+  if (d === 0) return "launch day";
+  return (d > 0 ? "day +" : "day \u2212") + Math.abs(d);
+}
+function compact(n) {
+  return n >= 1000 ? nf1.format(n / 1000) + "k" : nf0.format(n);
+}
+function niceTicks(min, max, count) {
+  const span = (max - min) || 1;
+  const raw = span / count;
+  const mag = Math.pow(10, Math.floor(Math.log10(raw)));
+  const norm = raw / mag;
+  const step = (norm < 1.5 ? 1 : norm < 3 ? 2 : norm < 7 ? 5 : 10) * mag;
+  const start = Math.floor(min / step) * step, end = Math.ceil(max / step) * step;
+  const ticks = [];
+  for (let v = start; v <= end + step * 1e-9; v += step) ticks.push(+v.toFixed(10));
+  return ticks;
+}
+
+/* ------------------------------------------------------------------
+   TEXT
+------------------------------------------------------------------- */
+const $ = id => document.getElementById(id);
+const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+function verdictFor(g) {
+  const p = g.series.find(s => s.d === 7);
+  const at0 = g.series.find(s => s.d === 0);
+  const gap = p.mv - p.implied;
+  const pct = gap / at0.mv * 100;
+  const sign = pct < 0 ? "\u2212" : "+";
+  const lead = gap < 0
+    ? `In its first week, the launch wiped <strong>${money(gap)}</strong> off ${g.publisher}\u2019s value`
+    : `In its first week, the launch added <strong>${money(gap)}</strong> to ${g.publisher}\u2019s value`;
+  return `${lead} (${sign}${nf1.format(Math.abs(pct))}%), beyond what its market did.`;
+}
+
+function updateText(g, animate) {
+  $("title").textContent = g.name;
+  $("meta").textContent = `Published by ${g.publisher}. Listed in ${g.city} as ${g.ticker}. Launched ${fmtDate(new Date(g.launch + "T00:00:00Z"))}.`;
+  $("verdict").innerHTML = verdictFor(g);
+  if (animate) {
+    const el = $("copy");
+    el.classList.remove("swap");
+    void el.offsetWidth;
+    el.classList.add("swap");
+  }
+}
+
+/* ------------------------------------------------------------------
+   CHART
+------------------------------------------------------------------- */
+let chartState = null;
+
+function render(g, animate) {
+  const box = $("chart");
+  const svg = $("svg");
+  const W = Math.max(300, box.clientWidth);
+  const H = Math.round(Math.max(260, Math.min(440, W * 0.46)));
+  const narrow = W < 520;
+  const m = { l: narrow ? 40 : 52, r: narrow ? 52 : 66, t: 30, b: 34 };
+  const iw = W - m.l - m.r, ih = H - m.t - m.b;
+
+  const x = d => m.l + (d - DAY_MIN) / (DAY_MAX - DAY_MIN) * iw;
+
+  const rv = g.series.filter(p => p.reviews != null);
+  const rTicks = niceTicks(0, Math.max(...rv.map(p => p.reviews)), 4);
+  const rTop = rTicks[rTicks.length - 1];
+  const yL = v => m.t + ih - (v / rTop) * ih;
+
+  const vals = g.series.flatMap(p => [p.mv, p.implied]);
+  let lo = Math.min(...vals), hi = Math.max(...vals);
+  const pad = (hi - lo) * 0.12 || hi * 0.05;
+  const vTicks = niceTicks(lo - pad, hi + pad, 4);
+  const vLo = vTicks[0], vHi = vTicks[vTicks.length - 1];
+  const yR = v => m.t + ih - (v - vLo) / (vHi - vLo) * ih;
+  const vFmt = v => vHi < 2 ? "£" + nf0.format(v * 1000) + "m" : "£" + nf1.format(v) + "bn";
+
+  const path = (pts, fy) => pts.map((p, i) => (i ? "L" : "M") + x(p.d).toFixed(1) + "," + fy(p).toFixed(1)).join("");
+  const mvLine = path(g.series, p => yR(p.mv));
+  const benchLine = path(g.series, p => yR(p.implied));
+  const popLine = path(rv, p => yL(p.reviews));
+  const popArea = popLine + `L${x(rv[rv.length - 1].d).toFixed(1)},${yL(0)}L${x(rv[0].d).toFixed(1)},${yL(0)}Z`;
+  const post = g.series.filter(p => p.d >= 0);
+  const gapArea = path(post, p => yR(p.mv)) +
+    post.slice().reverse().map(p => `L${x(p.d).toFixed(1)},${yR(p.implied).toFixed(1)}`).join("") + "Z";
+
+  let s = "";
+  // gridlines follow the market value axis
+  vTicks.forEach(v => {
+    s += `<line x1="${m.l}" x2="${m.l + iw}" y1="${yR(v)}" y2="${yR(v)}" stroke="var(--grid)" />`;
+    s += `<text x="${m.l + iw + 8}" y="${yR(v) + 4}">${vFmt(v)}</text>`;
+  });
+  rTicks.forEach(v => {
+    s += `<text x="${m.l - 8}" y="${yL(v) + 4}" text-anchor="end">${compact(v)}</text>`;
+  });
+  (narrow ? [-30, 0, 30, 60] : [-30, -15, 0, 15, 30, 45, 60]).forEach(d => {
+    if (d === 0) return;
+    const label = d < 0 ? "\u2212" + Math.abs(d) + "d" : "+" + d + "d";
+    s += `<text x="${x(d)}" y="${m.t + ih + 22}" text-anchor="middle">${label}</text>`;
+  });
+  s += `<text class="axis-title-pop" x="${m.l}" y="14" text-anchor="start">Reviews per day</text>`;
+  s += `<text class="axis-title-mv" x="${m.l + iw + m.r - 2}" y="14" text-anchor="end">Market value</text>`;
+
+  s += `<path class="fade" d="${popArea}" fill="var(--pop-fill)" />`;
+  s += `<path class="fade" d="${gapArea}" fill="var(--gap)" />`;
+  s += `<path class="fade" d="${benchLine}" fill="none" stroke="var(--bench)" stroke-width="1.5" stroke-dasharray="5 4" />`;
+  s += `<path class="draw" d="${popLine}" fill="none" stroke="var(--pop)" stroke-width="2" stroke-linejoin="round" />`;
+  s += `<path class="draw" d="${mvLine}" fill="none" stroke="var(--mv)" stroke-width="3" stroke-linejoin="round" stroke-linecap="round" />`;
+
+  s += `<line x1="${x(0)}" x2="${x(0)}" y1="${m.t - 4}" y2="${m.t + ih}" stroke="var(--ink)" stroke-width="1.5" />`;
+  s += `<text class="launch-label" x="${x(0)}" y="${m.t + ih + 22}" text-anchor="middle">Launch</text>`;
+
+  s += `<g id="hover" style="display:none">
+          <line id="hoverLine" y1="${m.t}" y2="${m.t + ih}" stroke="var(--muted)" stroke-width="1" />
+          <circle id="hoverMv" r="5" fill="var(--mv)" stroke="var(--surface)" stroke-width="2" />
+          <circle id="hoverPop" r="4.5" fill="var(--pop)" stroke="var(--surface)" stroke-width="2" />
+        </g>`;
+  s += `<rect id="hit" x="${m.l}" y="${m.t}" width="${iw}" height="${ih}" fill="transparent" />`;
+
+  svg.setAttribute("viewBox", `0 0 ${W} ${H}`);
+  svg.setAttribute("width", W);
+  svg.setAttribute("height", H);
+  svg.innerHTML = `<desc id="svgDesc">${g.name}: daily Steam reviews and ${g.publisher}\u2019s market value from 30 days before launch to 60 days after.</desc>` + s;
+
+  chartState = { g, m, iw, x, yL, yR };
+
+  if (animate && !reduceMotion) {
+    svg.querySelectorAll(".draw").forEach((el, i) => {
+      const len = el.getTotalLength();
+      el.style.strokeDasharray = len;
+      el.style.strokeDashoffset = len;
+      el.getBoundingClientRect();
+      el.style.transition = `stroke-dashoffset 1.3s cubic-bezier(.4,0,.2,1) ${i * 0.15}s`;
+      el.style.strokeDashoffset = 0;
+    });
+    svg.querySelectorAll(".fade").forEach(el => {
+      el.style.opacity = 0;
+      el.getBoundingClientRect();
+      el.style.transition = "opacity 0.6s ease 0.9s";
+      el.style.opacity = 1;
+    });
+  }
+
+  const hit = $("hit");
+  hit.addEventListener("pointermove", onHover);
+  hit.addEventListener("pointerleave", hideHover);
+}
+
+function onHover(e) {
+  if (!chartState) return;
+  const { g, m, iw, x, yL, yR } = chartState;
+  const svg = $("svg");
+  const rect = svg.getBoundingClientRect();
+  const scale = rect.width / svg.viewBox.baseVal.width;
+  const px = (e.clientX - rect.left) / scale;
+  const d = Math.max(DAY_MIN, Math.min(DAY_MAX, Math.round(DAY_MIN + (px - m.l) / iw * (DAY_MAX - DAY_MIN))));
+  const p = g.series.find(s => s.d === d);
+  if (!p) return;
+
+  $("hover").style.display = "";
+  $("hoverLine").setAttribute("x1", x(d));
+  $("hoverLine").setAttribute("x2", x(d));
+  $("hoverMv").setAttribute("cx", x(d));
+  $("hoverMv").setAttribute("cy", yR(p.mv));
+  const pop = $("hoverPop");
+  if (p.reviews != null) {
+    pop.style.display = "";
+    pop.setAttribute("cx", x(d));
+    pop.setAttribute("cy", yL(p.reviews));
+  } else {
+    pop.style.display = "none";
+  }
+
+  const tip = $("tooltip");
+  tip.innerHTML =
+    `<b>${fmtDate(p.date)}</b>, ${dayLabel(d)}<br>` +
+    (p.reviews != null ? `Reviews: ${nf0.format(p.reviews)}<br>` : `Not released yet<br>`) +
+    `Market value: ${moneyPrecise(p.mv)}<br>` +
+    `If it had moved with its market: ${moneyPrecise(p.implied)}`;
+  tip.style.opacity = 1;
+  const boxW = $("chart").clientWidth;
+  const tipW = tip.offsetWidth;
+  let left = x(d) * scale + 14;
+  if (left + tipW > boxW) left = x(d) * scale - tipW - 14;
+  tip.style.transform = `translate(${Math.max(0, left)}px, ${m.t * scale}px)`;
+}
+
+function hideHover() {
+  const h = $("hover");
+  if (h) h.style.display = "none";
+  $("tooltip").style.opacity = 0;
+}
+
+/* ------------------------------------------------------------------
+   ROTATION
+------------------------------------------------------------------- */
+let idx = 0, elapsed = 0, last = performance.now();
+let userPaused = false, hoverPaused = false;
+const tabsEl = $("tabs");
+const fills = [];
+const tabs = GAMES.map((g, i) => {
+  const b = document.createElement("button");
+  b.className = "tab";
+  b.type = "button";
+  b.setAttribute("role", "tab");
+  b.setAttribute("aria-controls", "stage");
+  b.setAttribute("aria-label", g.name);
+  b.innerHTML = `${g.short || g.name}<span class="bar"><span class="fill"></span></span>`;
+  b.addEventListener("click", () => show(i, true));
+  b.addEventListener("keydown", e => {
+    if (e.key === "ArrowRight" || e.key === "ArrowLeft") {
+      e.preventDefault();
+      const n = (i + (e.key === "ArrowRight" ? 1 : -1) + GAMES.length) % GAMES.length;
+      show(n, true);
+      tabs[n].focus();
+    }
+  });
+  tabsEl.appendChild(b);
+  fills.push(b.querySelector(".fill"));
+  return b;
+});
+
+function show(i, animate) {
+  fills.forEach(f => (f.style.width = "0"));
+  idx = i;
+  elapsed = 0;
+  tabs.forEach((t, j) => {
+    t.setAttribute("aria-selected", j === i ? "true" : "false");
+    t.tabIndex = j === i ? 0 : -1;
+  });
+  hideHover();
+  updateText(GAMES[i], animate);
+  render(GAMES[i], animate);
+}
+
+function tick(now) {
+  const dt = now - last;
+  last = now;
+  if (!userPaused && !hoverPaused && !document.hidden) {
+    elapsed += dt;
+    if (elapsed >= ROTATE_MS) show((idx + 1) % GAMES.length, true);
+  }
+  fills[idx].style.width = Math.min(100, elapsed / ROTATE_MS * 100) + "%";
+  requestAnimationFrame(tick);
+}
+
+const stage = $("stage");
+stage.addEventListener("pointerenter", e => { if (e.pointerType === "mouse") hoverPaused = true; });
+stage.addEventListener("pointerleave", () => { hoverPaused = false; });
+stage.addEventListener("focusin", e => { if (e.target.matches(":focus-visible")) hoverPaused = true; });
+stage.addEventListener("focusout", () => { hoverPaused = false; });
+
+$("pause").addEventListener("click", () => {
+  userPaused = !userPaused;
+  $("pause").setAttribute("aria-pressed", userPaused ? "true" : "false");
+  $("pause").textContent = userPaused ? "Resume rotation" : "Pause rotation";
+});
+
+let resizeTimer;
+window.addEventListener("resize", () => {
+  clearTimeout(resizeTimer);
+  resizeTimer = setTimeout(() => render(GAMES[idx], false), 120);
+});
+
+show(0, true);
+requestAnimationFrame(tick);
+</script>
+</body>
+</html>

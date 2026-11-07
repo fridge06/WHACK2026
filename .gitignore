@@ -11,3 +11,9 @@ venv/
 
 # IDE
 .vscode/
+# Testing
+.pytest_cache/
+
+# OS
+.DS_Store
+Thumbs.db

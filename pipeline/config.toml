@@ -1,0 +1,34 @@
+# Launch Day Alpha pipeline configuration.
+# Every tunable value and every assumption about the inputs lives here (PLAN.md sections 4 and 8).
+
+[window]
+months_before = 3        # popularity and market window starts this many calendar months before launch
+months_after = 6         # ...and ends this many calendar months after launch
+
+[verdict]
+day = 30                 # days after launch at which the verdict gap is measured
+
+[site]
+games_per_view = 6       # games picked at random on each page load
+popularity_label = "Popularity (launch month = 100)"
+currency = "GBP"
+
+[paths]
+raw_dir = "data/raw"
+mock_dir = "data/mock"
+output = "site/data/games.json"
+
+# Popularity signals. Names are unknown until the data teammate reports back;
+# milestone 2 fills these in for the mock data, milestone 6 for the real data.
+# Each signal declares:
+#   label        readable name shown on the site
+#   weight       relative weight (rescaled over the signals present each month)
+#   granularity  "monthly" or "daily"
+#   rollup       for daily signals: "sum" (counts) or "mean" (levels)
+#
+# Example:
+# [signals.example_signal]
+# label = "Readable name"
+# weight = 1.0
+# granularity = "monthly"
+[signals]

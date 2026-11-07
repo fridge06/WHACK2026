@@ -25,7 +25,7 @@ Popularity is **monthly**, because most of the sources we can get update monthly
 
 ## 2. What already exists
 
-- `prototype/launch-day-alpha.html`: a single-file prototype with generated placeholder data. **Use it as the visual reference** (typography, colours, layout, chart styling, tooltip, draw-in animation, dark mode, mobile layout). Its behaviour is out of date in two ways: it auto-rotates through games (remove this, including the progress bars and pause button), and it uses a daily popularity series over a 30/60-day window (replace with section 5).
+- `prototype/launch-day-alpha.html`: a single-file prototype with generated placeholder data. **Use it as the visual reference** for layout, chart styling, tooltip, draw-in animation and mobile layout. **Do not copy its colours or fonts**; section 6.1 replaces them. Its behaviour is out of date in two ways: it auto-rotates through games (remove this, including the progress bars and pause button), and it uses a daily popularity series over a 30/60-day window (replace with section 5).
 - **The game list:** the data teammate is choosing the ~25 games and has likely already committed a file listing them. Look through the repo for it before starting milestone 2, tell me what you found, and build the loader around its real shape. Don't assume it matches `data-templates/games.csv`.
 - `data-templates/`: draft CSV templates and a README written for the data teammate. These are **provisional and partly out of date**: the date ranges in that README use the old 45/60-day window.
 
@@ -196,7 +196,16 @@ Also write `verdict_phrase` to `meta` ("In its first week" for 7, "In its first 
 
 ## 6. Frontend requirements
 
-Port the prototype into `site/index.html`, `site/styles.css` and `site/app.js`, keeping its look. Then:
+Port the prototype into `site/index.html`, `site/styles.css` and `site/app.js`, keeping its layout but restyled per 6.1. Then:
+
+### 6.1 Visual style (replaces the prototype's palette)
+
+- Backgrounds: plain white (`#FFFFFF`) in light mode, neutral dark grey (`#1C1C1E`) in dark mode. No tinted (purple/lavender) backgrounds or greys; text, gridlines and axes use neutral greys.
+- No decorative gradients: remove the gradient strip at the top and the gradient tab bars. The chart sits on the page background (a thin neutral border at most), not on a tinted card.
+- Font: Roboto (Google Fonts) throughout, with a system sans-serif fallback.
+- Series colours: **blue for popularity** (line, point markers, light blue fill), **red for market value** (bold line). The implied "moved with its market" line is a neutral grey dashed line. The shaded gap uses a light tint of the market-value red. Pick exact shades per theme so both lines stay clearly readable on white and on dark grey.
+- Theme: a toggle button in the header switches light/dark. On first visit it follows `prefers-color-scheme`; the user's choice is remembered in `localStorage` (inside `try/catch`) and applied via a `data-theme` attribute on `<html>` before first paint to avoid a flash.
+- Single page only; no info page.
 
 **Game selection and menu**
 
@@ -212,7 +221,7 @@ Port the prototype into `site/index.html`, `site/styles.css` and `site/app.js`, 
 - Popularity: plot each month's point at its `mid` date, joined by a line with visible point markers and a light filled area beneath. Show `null` months as gaps, never as zero. Left-axis title from `meta.popularity_label`.
 - Market value: the daily `mv` line, the dashed `implied` line, and the shaded gap from launch onwards, as in the prototype.
 - Tooltip: hovering shows the date, that day's market value and implied value (noting "Market closed: last close shown" when `trading` is false), and the popularity value for that calendar month.
-- Keep the draw-in animation when switching games (disabled under `prefers-reduced-motion`), light and dark themes via CSS variables, and responsiveness down to about 360px wide.
+- Keep the draw-in animation when switching games (disabled under `prefers-reduced-motion`), light and dark themes via CSS variables (see 6.1), and responsiveness down to about 360px wide.
 
 **Other**
 

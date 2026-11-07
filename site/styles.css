@@ -1,0 +1,16 @@
+/* Launch Day Alpha styles. Full visual style (PLAN.md 6.1) arrives in milestone 5. */
+:root {
+  color-scheme: light dark;
+  --bg: #FFFFFF;
+  --ink: #1C1C1E;
+}
+@media (prefers-color-scheme: dark) {
+  :root { --bg: #1C1C1E; --ink: #F2F2F2; }
+}
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: Roboto, system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+.wrap { max-width: 1080px; margin: 0 auto; padding: 28px 16px; }
