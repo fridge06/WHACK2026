@@ -1,7 +1,3 @@
-Y_1 axis: Steam, Google Trends
-Y_2 axis: Alpha Vantage, Nasdaq Data Link
-X axis: Time
-
 The website should have a cycle of 6 games with thteir names, publishers name, then agraph.
 This graph would have 1 x-axis (time) and 2 (sclaed) y-axi (populatiry measure, stock price).
 
@@ -18,4 +14,6 @@ Block:
 - Alpha Release Data
 - Publishers name
 - Graph
-  - 
+  - Y_1 axis: Steam, Google Trends, Reddit
+  - Y_2 axis: Alpha Vantage, Nasdaq Data Link
+  - X axis: Time
