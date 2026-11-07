@@ -3,21 +3,21 @@
   "seed": 2026,
   "game_list": "data/games.csv",
   "excluded": {
-    "lethal_company": "share price stops 45 days after launch (delisted)",
-    "horizon_zero_dawn": "no signal data in the launch month (no base month)"
+    "assassins_creed_shadows": "share price stops 45 days after launch (delisted)",
+    "final_fantasy_xvi": "no signal data in the launch month (no base month)"
   },
   "gaps": {
     "god_of_war": [
       "signal mock_reviews missing entirely"
     ],
-    "no_mans_sky": [
-      "signal mock_posts missing at month offset(s) [-2]"
+    "assassins_creed_valhalla": [
+      "signal mock_posts missing at month offset(s) [-1]"
     ],
-    "forza_horizon_5": [
-      "signal mock_posts missing at month offset(s) [5]"
+    "horizon_zero_dawn": [
+      "signal mock_posts missing at month offset(s) [-2, 1]"
     ],
-    "elden_ring": [
-      "signal mock_posts missing at month offset(s) [-2]"
+    "doom_eternal": [
+      "signal mock_posts missing at month offset(s) [2]"
     ]
   }
 }

@@ -22,8 +22,7 @@ from pipeline.popularity import popularity_months
 DATE_RE = re.compile(r"^\d{4}-\d{2}-\d{2}$")
 MONTH_RE = re.compile(r"^\d{4}-\d{2}$")
 TIMESTAMP_RE = re.compile(r"^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z$")
-GAP_TOLERANCE_BN = 1e-5     # mv and implied are rounded to 6 dp
-PCT_TOLERANCE = 0.02        # gap_pct is rounded to 2 dp
+PCT_TOLERANCE = 0.011      # verdict values are rounded to 2 dp
 
 
 class ContractError(Exception):
@@ -64,7 +63,6 @@ def _check_fields(obj, spec: dict, where: str, errors: list[str]) -> bool:
 META_SPEC = {
     "generated_at": (lambda v: isinstance(v, str) and bool(TIMESTAMP_RE.match(v)), "UTC timestamp YYYY-MM-DDTHH:MM:SSZ"),
     "placeholder": (lambda v: isinstance(v, bool), "boolean"),
-    "currency": (_is_str, "string"),
     "months_before": (lambda v: _is_int(v) and v >= 0, "non-negative integer"),
     "months_after": (lambda v: _is_int(v) and v >= 0, "non-negative integer"),
     "games_per_view": (lambda v: _is_int(v) and v > 0, "positive integer"),
@@ -92,9 +90,11 @@ GAME_SPEC = {
     "popularity": (lambda v: isinstance(v, list), "list"),
     "market": (lambda v: isinstance(v, list) and len(v) > 0, "non-empty list"),
 }
+_is_pct = (lambda v: _is_num(v) and v > -100, "number above -100")
 VERDICT_SPEC = {
     "day": (_is_int, "integer"),
-    "gap_gbp_bn": (_is_num, "number"),
+    "pct": _is_pct,
+    "implied_pct": _is_pct,
     "gap_pct": (_is_num, "number"),
 }
 POP_SPEC = {
@@ -106,8 +106,8 @@ POP_SPEC = {
 MARKET_SPEC = {
     "date": (lambda v: isinstance(v, str) and bool(DATE_RE.match(v)), "date YYYY-MM-DD"),
     "d": (_is_int, "integer"),
-    "mv": (lambda v: _is_num(v) and v > 0, "positive number"),
-    "implied": (lambda v: _is_num(v) and v > 0, "positive number"),
+    "pct": _is_pct,
+    "implied_pct": _is_pct,
     "trading": (lambda v: isinstance(v, bool), "boolean"),
 }
 
@@ -165,8 +165,9 @@ def _check_game(g: dict, meta: dict, signal_ids: set[str], errors: list[str]) ->
         errors.append(f"{where}.market: no trading day on or before launch (no anchor)")
         return
     anchor = anchors[-1]
-    if abs(anchor["mv"] - anchor["implied"]) > 1e-9:
-        errors.append(f"{where}.market: implied must equal mv at the anchor {anchor['date']}, got {anchor['implied']} vs {anchor['mv']}")
+    if anchor["pct"] != 0 or anchor["implied_pct"] != 0:
+        errors.append(f"{where}.market: pct and implied_pct must be 0 at the anchor {anchor['date']}, "
+                      f"got {anchor['pct']} and {anchor['implied_pct']}")
 
     # verdict
     v = g["verdict"]
@@ -178,12 +179,12 @@ def _check_game(g: dict, meta: dict, signal_ids: set[str], errors: list[str]) ->
     if at is None:
         errors.append(f"{where}.verdict: day {v['day']} is outside the market series")
         return
-    gap = at["mv"] - at["implied"]
-    if abs(gap - v["gap_gbp_bn"]) > GAP_TOLERANCE_BN:
-        errors.append(f"{where}.verdict.gap_gbp_bn: {v['gap_gbp_bn']} but mv - implied on day {v['day']} is {gap:.6f}")
-    pct = 100 * gap / anchor["mv"]
-    if abs(pct - v["gap_pct"]) > PCT_TOLERANCE:
-        errors.append(f"{where}.verdict.gap_pct: {v['gap_pct']} but 100 x gap / anchor mv is {pct:.2f}")
+    for key in ("pct", "implied_pct"):
+        if abs(at[key] - v[key]) > PCT_TOLERANCE:
+            errors.append(f"{where}.verdict.{key}: {v[key]} but the market value on day {v['day']} is {at[key]}")
+    gap = at["pct"] - at["implied_pct"]
+    if abs(gap - v["gap_pct"]) > PCT_TOLERANCE:
+        errors.append(f"{where}.verdict.gap_pct: {v['gap_pct']} but pct - implied_pct on day {v['day']} is {gap:.2f}")
 
 
 def validate_output(doc) -> list[str]:

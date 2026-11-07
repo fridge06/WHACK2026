@@ -44,7 +44,6 @@ def test_game_metadata_shape(games, result):
     assert list(out.columns) == GAME_COLUMNS
     assert list(out["game_id"]) == list(games.index)
     assert out["price_symbol"].str.startswith("MOCK_").all()
-    assert (out["shares_outstanding"] > 0).all()
     # games with the same publisher share one invented company
     assert (out.groupby("publisher")["price_symbol"].nunique() == 1).all()
 

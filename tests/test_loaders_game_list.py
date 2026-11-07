@@ -57,9 +57,17 @@ def test_blank_rows_are_ignored(tmp_path):
 
 
 def test_bad_date_is_reported(tmp_path):
-    path = write(tmp_path, "game_name,publisher_name,release_date\nGame,A,10/12/2020\n")
+    path = write(tmp_path, "game_name,publisher_name,release_date\nGame,A,Dec 2020\n")
     with pytest.raises(ValueError, match="Game"):
         load_game_list(path)
+
+
+def test_day_first_dates_and_teammate_columns(tmp_path):
+    path = write(tmp_path, "game_name,steam_id,company_stock_ticker,alpha_release_date,publisher_name,yahoo_index\r\n"
+                           "Cyberpunk 2077,1091500,CDR.WA,10/12/2020,CD PROJEKT RED,^STOXX\r\n")
+    g = load_game_list(path).loc["cyberpunk_2077"]
+    assert g["launch_date"] == pd.Timestamp("2020-12-10")  # 10 December, not 12 October
+    assert (g["price_symbol"], g["benchmark_symbol"], g["steam_appid"]) == ("CDR.WA", "^STOXX", "1091500")
 
 
 def test_missing_column_is_reported(tmp_path):

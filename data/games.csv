@@ -1,20 +1,20 @@
-﻿game_name,steam_id,company_stock_ticker,alpha_release_date,publisher_name,yahoo_index
-Cyberpunk 2077,1091500,CDR.WA,10/12/2020,CD PROJEKT RED,^WIG20
-Hogwarts Legacy,990080,WBD,10/02/2023,Warner Bros. Games,^IXIC
-Assassin's Creed Shadows,3159330,UBI.PA,20/03/2025,Ubisoft,^FCHI
-Red Dead Redemption 2,1174180,TTWO,26/10/2018,Rockstar Games,^IXIC
-GTA V,271590,TTWO,17/09/2013,Rockstar Games,^IXIC
-The Witcher 3,292030,CDR.WA,19/05/2015,CD PROJEKT RED,^WIG20
-Elden Ring,1245620,7832.T,25/02/2022,Bandai Namco Entertainment,^N225
-Ghost of Tsushima,2215430,SONY,17/07/2020,Sony Interactive Entertainment,^NYA
-Resident Evil 4,2050650,9697.T,24/03/2023,Capcom,^N225
-Final Fantasy XVI,2515020,9684.T,22/06/2023,Square Enix,^N225
-Assassin's Creed Valhalla,2208920,UBI.PA,10/11/2020,Ubisoft,^FCHI
-Far Cry 6,2369390,UBI.PA,07/10/2021,Ubisoft,^FCHI
-Forza Horizon 5,1551360,MSFT,09/11/2021,Xbox Game Studios,^IXIC
-Diablo IV,2344520,AIY.DE,06/06/2023,Blizzard Entertainment,^ATVI
-DOOM Eternal,782330,AIY.DE,20/03/2020,Blizzard Entertainment,^ATVI
-Horizon Forbidden West,2420110,SONY,18/02/2022,Sony Interactive Entertainment,^NYA
-God of War,1593500,SONY,20/04/2018,Sony Interactive Entertainment,^NYA
-Horizon Zero Dawn,1151640,SONY,28/02/2017,Sony Interactive Entertainment,^NYA
-Subnautica,264710,259960.KS,16/12/2014,Unknown Worlds Entertainment,^KS11
+﻿game_name,steam_id,company_stock_ticker,alpha_release_date,publisher_name,yahoo_index,wikipedia_title
+Cyberpunk 2077,1091500,CDR.WA,10/12/2020,CD PROJEKT RED,^STOXX,
+Hogwarts Legacy,990080,J5A.SG,10/02/2023,Warner Bros. Games,EXXT.DE,
+Assassin's Creed Shadows,3159330,UBI.PA,20/03/2025,Ubisoft,^FCHI,
+Red Dead Redemption 2,1174180,TTWO,26/10/2018,Rockstar Games,^IXIC,
+GTA V,271590,TTWO,17/09/2013,Rockstar Games,^IXIC,
+The Witcher 3,292030,CDR.WA,19/05/2015,CD PROJEKT RED,^STOXX,
+Elden Ring,1245620,7832.T,25/02/2022,Bandai Namco Entertainment,^N225,
+Ghost of Tsushima,2215430,SONY,17/07/2020,Sony Interactive Entertainment,^NYA,
+Resident Evil 4,2050650,9697.T,24/03/2023,Capcom,^N225,Resident Evil 4 (2023 video game)
+Final Fantasy XVI,2515020,9684.T,22/06/2023,Square Enix,^N225,
+Assassin's Creed Valhalla,2208920,UBI.PA,10/11/2020,Ubisoft,^FCHI,
+Far Cry 6,2369390,UBI.PA,07/10/2021,Ubisoft,^FCHI,
+Forza Horizon 5,1551360,MSFT,09/11/2021,Xbox Game Studios,^IXIC,
+Diablo IV,2344520,,06/06/2023,Blizzard Entertainment,,
+DOOM Eternal,782330,,20/03/2020,Bethesda Softworks,,
+Horizon Forbidden West,2420110,SONY,18/02/2022,Sony Interactive Entertainment,^NYA,
+God of War,1593500,SONY,20/04/2018,Sony Interactive Entertainment,^NYA,God of War (2018 video game)
+Horizon Zero Dawn,1151640,SONY,28/02/2017,Sony Interactive Entertainment,^NYA,
+Subnautica,264710,,16/12/2014,Unknown Worlds Entertainment,,

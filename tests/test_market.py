@@ -15,8 +15,7 @@ def weekday_series(start, end, value=10.0, overrides=None):
 
 
 def game(launch, **extra):
-    base = {"launch_date": pd.Timestamp(launch), "price_symbol": "CO", "benchmark_symbol": "IDX",
-            "shares_outstanding": 1e9, "gbp_per_local": 1.0}
+    base = {"launch_date": pd.Timestamp(launch), "price_symbol": "CO", "benchmark_symbol": "IDX"}
     base.update(extra)
     return pd.Series(base)
 
@@ -71,9 +70,11 @@ def test_weekend_launch_anchors_on_friday():
     res = run(launch, co, idx)
     assert res["anchor"] == pd.Timestamp("2021-03-05")
     by_date = {m["date"]: m for m in res["market"]}
-    fri, sat = by_date["2021-03-05"], by_date["2021-03-06"]
-    assert fri["mv"] == fri["implied"] == 12.0
-    assert sat["trading"] is False and sat["mv"] == 12.0 and sat["d"] == 0
+    fri, sat, thu = by_date["2021-03-05"], by_date["2021-03-06"], by_date["2021-03-04"]
+    assert fri["pct"] == fri["implied_pct"] == 0
+    assert sat["trading"] is False and sat["pct"] == 0 and sat["d"] == 0
+    assert thu["pct"] == pytest.approx(100 * (10 / 12 - 1), abs=1e-4)      # relative to the Friday anchor
+    assert thu["implied_pct"] == pytest.approx(-50.0)
 
 
 def test_launch_on_holiday_weekday_anchors_on_previous_trading_day():
@@ -97,14 +98,16 @@ def test_one_market_entry_per_calendar_day(launch):
     assert [m["d"] for m in res["market"]] == list(range(-(pd.Timestamp(launch) - w_from).days, (w_to - pd.Timestamp(launch)).days + 1))
 
 
-def test_market_value_uses_shares_and_fx():
+def test_pct_change_is_independent_of_price_level():
+    # Same moves at very different price levels (e.g. yen vs dollars) give the same % change.
     launch = "2021-03-10"
-    co = weekday_series("2020-11-01", "2021-10-01", 50.0)
     idx = weekday_series("2020-11-01", "2021-10-01", 100.0)
-    w_from, w_to = window_bounds(pd.Timestamp(launch), 3, 6)
-    g = game(launch, shares_outstanding=2e8, gbp_per_local=0.005)
-    res = compute_market(g, {"CO": co, "IDX": idx}, w_from, w_to, 30, 10)
-    assert res["market"][0]["mv"] == pytest.approx(50 * 2e8 * 0.005 / 1e9)
+    results = []
+    for level in (0.5, 50.0, 5000.0):
+        co = weekday_series("2020-11-01", "2021-10-01", level)
+        co[co.index > pd.Timestamp(launch)] = level * 1.25
+        results.append(run(launch, co, idx)["market"][-1]["pct"])
+    assert results == [25.0, 25.0, 25.0]
 
 
 def test_verdict_company_falls_with_flat_market():
@@ -113,7 +116,7 @@ def test_verdict_company_falls_with_flat_market():
     co[co.index > pd.Timestamp(launch)] = 9.0
     idx = weekday_series("2020-11-01", "2021-10-01", 100.0)
     v = run(launch, co, idx)["verdict"]
-    assert v == {"day": 30, "gap_gbp_bn": -1.0, "gap_pct": -10.0}
+    assert v == {"day": 30, "pct": -10.0, "implied_pct": 0.0, "gap_pct": -10.0}
 
 
 def test_verdict_company_flat_while_market_rises():
@@ -122,8 +125,17 @@ def test_verdict_company_flat_while_market_rises():
     idx = weekday_series("2020-11-01", "2021-10-01", 100.0)
     idx[idx.index > pd.Timestamp(launch)] = 110.0
     v = run(launch, co, idx)["verdict"]
-    assert v["gap_gbp_bn"] == pytest.approx(-1.0)
-    assert v["gap_pct"] == pytest.approx(-10.0)
+    assert (v["pct"], v["implied_pct"], v["gap_pct"]) == (0.0, 10.0, -10.0)
+
+
+def test_verdict_both_move():
+    launch = "2021-03-10"
+    co = weekday_series("2020-11-01", "2021-10-01", 10.0)
+    co[co.index > pd.Timestamp(launch)] = 7.0          # -30%
+    idx = weekday_series("2020-11-01", "2021-10-01", 100.0)
+    idx[idx.index > pd.Timestamp(launch)] = 93.5       # -6.5%
+    v = run(launch, co, idx)["verdict"]
+    assert (v["pct"], v["implied_pct"], v["gap_pct"]) == (-30.0, -6.5, -23.5)
 
 
 def test_verdict_on_a_weekend_uses_carried_values():
@@ -131,7 +143,7 @@ def test_verdict_on_a_weekend_uses_carried_values():
     co = weekday_series("2020-11-01", "2021-10-01", 10.0, {"2021-04-02": 11.0})
     idx = weekday_series("2020-11-01", "2021-10-01", 100.0)
     v = run(launch, co, idx)["verdict"]
-    assert v["gap_gbp_bn"] == pytest.approx(1.0)
+    assert v["gap_pct"] == pytest.approx(10.0)
 
 
 def test_verdict_beyond_window_is_an_error():
@@ -142,7 +154,7 @@ def test_verdict_beyond_window_is_an_error():
 
 
 @pytest.mark.parametrize("field, value", [
-    ("shares_outstanding", float("nan")), ("gbp_per_local", 0), ("price_symbol", ""), ("benchmark_symbol", None),
+    ("price_symbol", ""), ("benchmark_symbol", None), ("price_symbol", float("nan")),
 ])
 def test_missing_metadata_is_an_error(field, value):
     launch = "2021-03-10"

@@ -8,7 +8,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 CONFIG_PATH = Path(__file__).resolve().parent / "config.toml"
 
-GRANULARITIES = {"monthly", "daily"}
+GRANULARITIES = {"monthly", "weekly", "daily"}
 ROLLUPS = {"sum", "mean"}
 
 
@@ -32,8 +32,8 @@ def check_signals(signals: dict) -> None:
         where = f"signal {name!r} in pipeline/config.toml"
         if s.get("granularity") not in GRANULARITIES:
             raise ValueError(f"{where}: granularity must be one of {sorted(GRANULARITIES)}")
-        if s["granularity"] == "daily" and s.get("rollup") not in ROLLUPS:
-            raise ValueError(f"{where}: daily signals need rollup = one of {sorted(ROLLUPS)}")
+        if s["granularity"] != "monthly" and s.get("rollup") not in ROLLUPS:
+            raise ValueError(f"{where}: {s['granularity']} signals need rollup = one of {sorted(ROLLUPS)}")
         weight = s.get("weight", 1.0)
         if not isinstance(weight, (int, float)) or weight <= 0:
             raise ValueError(f"{where}: weight must be a positive number")

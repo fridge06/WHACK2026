@@ -13,15 +13,17 @@ A hackathon project for the Marshall Wace "New Worlds" prompt (build something t
 For the game on screen, the page shows:
 
 - the game name, publisher, stock listing and launch date
-- a one-line verdict, e.g. "In its first month, the launch wiped £1.8bn off CD Projekt's value (−23.6%), beyond what its market did."
+- a one-line verdict, e.g. "In its first month, CD Projekt's value fell 23.6% behind its market: down 30.1%, while its market fell 6.5%."
 - a dual-axis chart over time, from **3 months before launch to 6 months after**:
   - **x-axis:** time, with month ticks and a marked launch-day line
   - **left y-axis:** a popularity index (launch month = 100), as a line with a point per month and a light filled area
-  - **right y-axis:** the company's market value in £, as a bold daily line
+  - **right y-axis:** the % change in the company's market value since launch, as a bold daily line
   - a dashed line showing what the company would have been worth had it moved with its market index
   - shading between those two lines after launch: the value the launch created or lost
 
 Popularity is **monthly**, because most of the sources we can get update monthly. Share prices are available daily, so market value stays daily. The chart overlays the two on the same time axis.
+
+Market value is shown as **% change since launch**, not in £. The number of shares barely changes over the window, so the % change in market value equals the % change in the share price: no share counts or exchange rates are needed, and games are comparable across company sizes.
 
 ## 2. What already exists
 
@@ -81,10 +83,10 @@ Design for that:
 **Game metadata**, one row per game (the teammate's file; the draft columns are below):
 
 ```
-game_id,name,short_name,publisher,city,ticker,price_symbol,benchmark_symbol,launch_date,steam_appid,wikipedia_title,shares_outstanding,gbp_per_local
+game_id,name,short_name,publisher,city,ticker,price_symbol,benchmark_symbol,launch_date,steam_appid,wikipedia_title
 ```
 
-`price_symbol` and `benchmark_symbol` are Yahoo Finance symbols. `shares_outstanding` is the share count at launch. `gbp_per_local` is the exchange rate (GBP per unit of local currency) on launch day. Dates are `YYYY-MM-DD`.
+`price_symbol` and `benchmark_symbol` are Yahoo Finance symbols. Dates are `YYYY-MM-DD`. (`pipeline/fetch.py` writes this file from the teammate's list in `data/games.csv`.)
 
 **Signals**, long format, one row per game per period per signal:
 
@@ -115,7 +117,6 @@ symbol,date,close
   "meta": {
     "generated_at": "2026-11-07T12:00:00Z",
     "placeholder": true,
-    "currency": "GBP",
     "months_before": 3,
     "months_after": 6,
     "games_per_view": 6,
@@ -137,12 +138,12 @@ symbol,date,close
       "launch": "2022-02-25",
       "window": { "from": "2021-11-25", "to": "2022-08-25" },
       "signals_used": ["example_signal"],
-      "verdict": { "day": 30, "gap_gbp_bn": 0.87, "gap_pct": 7.9 },
+      "verdict": { "day": 30, "pct": 12.4, "implied_pct": 4.5, "gap_pct": 7.9 },
       "popularity": [
         { "month": "2021-11", "m": -3, "mid": "2021-11-15", "value": 18.4 }
       ],
       "market": [
-        { "date": "2021-11-25", "d": -92, "mv": 10.2, "implied": 10.6, "trading": true }
+        { "date": "2021-11-25", "d": -92, "pct": -3.1, "implied_pct": 0.8, "trading": true }
       ]
     }
   ]
@@ -154,7 +155,8 @@ Field rules:
 - Only games that pass validation appear in `games`. Excluded games are listed in the build report with the reason.
 - `window.from` is the launch date minus 3 calendar months; `window.to` is the launch date plus 6 calendar months.
 - `popularity` has exactly one entry per calendar month from the 3 months before the launch month to the 6 months after it (10 entries). `m` is months relative to the launch month (launch month is `m = 0`). `mid` is the 15th of that month, used to place the point on the time axis. `value` is a number or `null`.
-- `market` has exactly one entry per calendar day across the window, in order. `d` is days from launch. `mv` and `implied` are in £bn. `implied` equals `mv` at the anchor day by construction. `trading` is false where the price was carried forward.
+- `market` has exactly one entry per calendar day across the window, in order. `d` is days from launch. `pct` is the % change in the company's market value since the anchor day; `implied_pct` is the % change it would have had moving with its market index. Both are 0 at the anchor day by construction. `trading` is false where the price was carried forward.
+- `verdict.pct` and `verdict.implied_pct` are the `market` values on day `verdict.day`; `gap_pct = pct − implied_pct` (percentage points of launch-day value).
 - `meta.placeholder` is true whenever any input came from the mock generator. The site must then show a "Placeholder data" badge.
 
 ## 5. Calculations
@@ -176,23 +178,20 @@ Because every signal equals 100 in the launch month, signals that only exist fro
 
 Known caveat to mention in the README: the launch month's value mixes days before and after launch, so the 100 point is "the launch month", not "launch day". This is fine for a monthly view.
 
-### 5.2 Market value (daily)
+### 5.2 Market value (daily, % change since launch)
 
-For each game, using local-currency closes:
+For each game, using the closes as published (Yahoo's are adjusted for splits, which keeps % changes correct):
 
 1. Build a calendar-day series across the window. Carry the last trading day's close forward over non-trading days, and set `trading = false` on those days. If the window starts on a non-trading day, use the last close before it.
 2. Find the anchor: the close on launch day, or the last trading day before it if launch fell on a non-trading day.
-3. Compute market value: `mv(t) = close(t) × shares_outstanding × gbp_per_local / 1e9`, in £bn. One fixed exchange rate per game is used deliberately, so currency swings don't leak into the result.
-4. Compute implied value from the benchmark: `implied(t) = mv(anchor) × bench(t) / bench(anchor)`, with the benchmark carried forward the same way.
+3. Company: `pct(t) = 100 × (close(t) / close(anchor) − 1)`. With a constant share count this is the % change in market value.
+4. Market: `implied_pct(t) = 100 × (bench(t) / bench(anchor) − 1)`, with the benchmark carried forward the same way.
 
 ### 5.3 Verdict
 
-At `verdict_day` (default 30, configurable):
+At `verdict_day` (default 30, configurable): `gap_pct = pct(d) − implied_pct(d)`, also writing `pct(d)` and `implied_pct(d)` to the verdict.
 
-- `gap_gbp_bn = mv(d) − implied(d)`
-- `gap_pct = 100 × gap_gbp_bn / mv(anchor)`
-
-Also write `verdict_phrase` to `meta` ("In its first week" for 7, "In its first month" for 30, otherwise "In its first N days"). The frontend phrases it: negative gaps "wiped £X off [publisher]'s value", positive gaps "added £X to [publisher]'s value". Format amounts under £1bn in millions.
+Also write `verdict_phrase` to `meta` ("In its first week" for 7, "In its first month" for 30, otherwise "In its first N days"). The frontend phrases it: negative gaps "[publisher]'s value fell X% behind its market", positive gaps "[publisher]'s value pulled X% ahead of its market", followed by the two underlying moves.
 
 ## 6. Frontend requirements
 
@@ -219,8 +218,8 @@ Port the prototype into `site/index.html`, `site/styles.css` and `site/app.js`, 
 
 - Time axis spans from the earlier of `window.from` and the first popularity `mid`, to the later of `window.to` and the last popularity `mid`, so every monthly point is on the chart (a launch on the 5th puts the last month's mid-point after `window.to`). The market lines still cover only the window. Put ticks at the start of each month, labelled with the short month name (adding the year at January or at the first tick). Keep the vertical launch-day line labelled "Launch".
 - Popularity: plot each month's point at its `mid` date, joined by a line with visible point markers and a light filled area beneath. Show `null` months as gaps, never as zero. Left-axis title from `meta.popularity_label`.
-- Market value: the daily `mv` line, the dashed `implied` line, and the shaded gap from launch onwards, as in the prototype.
-- Tooltip: hovering shows the date, that day's market value and implied value (noting "Market closed: last close shown" when `trading` is false), and the popularity value for that calendar month.
+- Market value: the daily `pct` line, the dashed `implied_pct` line, and the shaded gap from launch onwards, as in the prototype. The right axis is labelled in % change since launch, with the 0% line emphasised.
+- Tooltip: hovering shows the date, that day's % change in market value and in the "moved with its market" line (noting "Market closed: last close shown" when `trading` is false), and the popularity value for that calendar month.
 - Keep the draw-in animation when switching games (disabled under `prefers-reduced-motion`), light and dark themes via CSS variables (see 6.1), and responsiveness down to about 360px wide.
 
 **Other**
@@ -242,7 +241,7 @@ Work through these in order. Each ends with something runnable.
 3. **Pipeline core.** Loaders, popularity (5.1), market value (5.2) and verdict (5.3), plus `build.py --mock` writing `site/data/games.json` with `placeholder: true`. Include unit tests for daily-to-monthly rollup, indexing, weight rescaling with missing signals, missing base month, carry-forward, anchor selection on a weekend launch, calendar-month window edges (for example launches on the 29th–31st), and the verdict maths.
    *Done when:* `python -m pipeline.build --mock` writes a JSON file that passes milestone 4's checks, and the tests pass.
 
-4. **Validation.** `validate.py` checks the output against 4.2: field presence and types, exactly 10 popularity months per game, one market entry per day across the window, `implied == mv` at the anchor, verdict consistency. It also prints a coverage report per game: signals found, months present, whether a base month was found, and why any game was excluded. Run it automatically at the end of every build. Fail loudly on contract violations; warn and exclude on per-game data problems.
+4. **Validation.** `validate.py` checks the output against 4.2: field presence and types, exactly 10 popularity months per game, one market entry per day across the window, `pct == implied_pct == 0` at the anchor, verdict consistency. It also prints a coverage report per game: signals found, months present, whether a base month was found, and why any game was excluded. Run it automatically at the end of every build. Fail loudly on contract violations; warn and exclude on per-game data problems.
    *Done when:* the deliberately broken mock games are excluded with clear reasons, and the rest build cleanly.
 
 5. **Frontend port.** Do section 6.
@@ -268,7 +267,7 @@ Don't block on these. Pick the default, make it configurable, and keep the list 
 | Granularity of each signal | Monthly; daily signals rolled up per config |
 | Signal weights | Equal weights across configured signals |
 | Benchmark index per exchange | Read from game metadata; exclude the game with a clear reason if missing |
-| Share counts and FX rates | Read from game metadata; exclude the game with a clear reason if missing |
+| Share counts and FX rates | Not needed: market value is shown as % change since launch |
 | Verdict horizon | 30 days |
 | Whether raw data is committed to git | Teammate's choice; mock data committed |
 | Number of games shown per load | 6, via `games_per_view` in config |

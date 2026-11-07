@@ -1,16 +1,18 @@
-"""Daily market value, implied value and verdict (PLAN.md 5.2, 5.3)."""
+"""Daily % change in market value, the market-implied path, and the verdict (PLAN.md 5.2, 5.3).
+
+Market value is shown as % change since launch. With the share count constant over
+the window, that equals the % change in the share price, so no share counts or
+exchange rates are needed.
+"""
 
 from __future__ import annotations
-
-import math
 
 import numpy as np
 import pandas as pd
 
 from pipeline.errors import GameDataError
 
-MV_DECIMALS = 6      # £bn to 6 dp = £1,000 resolution
-PCT_DECIMALS = 2
+PCT_DECIMALS = 4     # per-day values; the verdict is rounded to 2
 
 
 def verdict_phrase(day: int) -> str:
@@ -47,19 +49,9 @@ def carry_forward(closes: pd.Series, days: pd.DatetimeIndex, max_gap_days: int, 
     return values, days.isin(used.index)
 
 
-def _require_number(game: pd.Series, field: str) -> float:
-    value = game.get(field)
-    try:
-        value = float(value)
-    except (TypeError, ValueError):
-        value = math.nan
-    if not math.isfinite(value) or value <= 0:
-        raise GameDataError(f"missing or invalid {field}")
-    return value
-
-
 def _require_text(game: pd.Series, field: str) -> str:
-    value = str(game.get(field) or "").strip()
+    value = game.get(field)
+    value = "" if value is None or (isinstance(value, float) and np.isnan(value)) else str(value).strip()
     if not value:
         raise GameDataError(f"missing {field}")
     return value
@@ -80,8 +72,6 @@ def compute_market(
     launch = pd.Timestamp(game["launch_date"]).normalize()
     symbol = _require_text(game, "price_symbol")
     bench_symbol = _require_text(game, "benchmark_symbol")
-    shares = _require_number(game, "shares_outstanding")
-    fx = _require_number(game, "gbp_per_local")
     for sym, what in ((symbol, "share price"), (bench_symbol, "benchmark")):
         if sym not in closes_by_symbol:
             raise GameDataError(f"no {what} data for symbol {sym}")
@@ -95,27 +85,28 @@ def compute_market(
         raise GameDataError(f"share price {symbol}: no trading day in the window on or before launch")
     a = int(traded_by_launch[-1])  # anchor: launch day, or the last trading day before it
 
-    mv = close * shares * fx / 1e9
-    implied = mv[a] * bench / bench[a]
+    pct = 100.0 * (close / close[a] - 1.0)
+    implied = 100.0 * (bench / bench[a] - 1.0)
 
     v = int((launch + pd.Timedelta(days=verdict_day) - days[0]).days)
     if v >= len(days):
         raise GameDataError(f"verdict day {verdict_day} is beyond the window end {window_to.date()}")
-    gap = mv[v] - implied[v]
 
     market = [
         {
             "date": day.strftime("%Y-%m-%d"),
             "d": int((day - launch).days),
-            "mv": round(float(mv[i]), MV_DECIMALS),
-            "implied": round(float(implied[i]), MV_DECIMALS),
+            "pct": round(float(pct[i]), PCT_DECIMALS) + 0.0,
+            "implied_pct": round(float(implied[i]), PCT_DECIMALS) + 0.0,
             "trading": bool(trading[i]),
         }
         for i, day in enumerate(days)
     ]
+    at = market[v]
     verdict = {
         "day": verdict_day,
-        "gap_gbp_bn": round(float(gap), MV_DECIMALS),
-        "gap_pct": round(float(100 * gap / mv[a]), PCT_DECIMALS),
+        "pct": round(at["pct"], 2) + 0.0,
+        "implied_pct": round(at["implied_pct"], 2) + 0.0,
+        "gap_pct": round(at["pct"] - at["implied_pct"], 2) + 0.0,
     }
     return {"market": market, "verdict": verdict, "anchor": days[a]}

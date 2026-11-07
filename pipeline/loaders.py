@@ -19,7 +19,7 @@ log = logging.getLogger("pipeline")
 GAME_COLUMNS = [
     "game_id", "name", "short_name", "publisher", "city", "ticker",
     "price_symbol", "benchmark_symbol", "launch_date", "steam_appid",
-    "wikipedia_title", "shares_outstanding", "gbp_per_local",
+    "wikipedia_title",
 ]
 REQUIRED_GAME_LIST_COLUMNS = ["name", "publisher", "launch_date"]
 
@@ -29,6 +29,12 @@ GAME_COLUMN_ALIASES = {
     "publisher_name": "publisher",
     "release_date": "launch_date",
     "alpha_release_date": "launch_date",
+    "index": "benchmark_symbol",
+    "benchmark": "benchmark_symbol",
+    "yahoo_index": "benchmark_symbol",
+    "company_stock_ticker": "ticker",
+    "steam_id": "steam_appid",
+    "steam_app_id": "steam_appid",
 }
 
 
@@ -50,6 +56,9 @@ def load_game_list(path: Path) -> pd.DataFrame:
     df = pd.read_csv(path, encoding="utf-8-sig", dtype=str, keep_default_na=False)
     df.columns = [c.strip() for c in df.columns]
     df = df.rename(columns=GAME_COLUMN_ALIASES)
+    # The teammate's list has a single "ticker" column holding the Yahoo symbol.
+    if "ticker" in df.columns and "price_symbol" not in df.columns:
+        df["price_symbol"] = df["ticker"]
     missing = [c for c in REQUIRED_GAME_LIST_COLUMNS if c not in df.columns]
     if missing:
         raise ValueError(f"{path}: game list is missing column(s) {missing}; found {list(df.columns)}")
@@ -57,11 +66,13 @@ def load_game_list(path: Path) -> pd.DataFrame:
     df = df.apply(lambda col: col.str.strip())
     df = df[(df != "").any(axis=1)].copy()
 
+    # YYYY-MM-DD, or day-first DD/MM/YYYY as the teammate's spreadsheet writes it.
     dates = pd.to_datetime(df["launch_date"], format="%Y-%m-%d", errors="coerce")
+    dates = dates.fillna(pd.to_datetime(df["launch_date"], format="%d/%m/%Y", errors="coerce"))
     bad = df.loc[dates.isna(), ["name", "launch_date"]]
     if not bad.empty:
         rows = ", ".join(f"{n!r} ({d!r})" for n, d in bad.itertuples(index=False))
-        raise ValueError(f"{path}: launch dates must be YYYY-MM-DD; bad rows: {rows}")
+        raise ValueError(f"{path}: launch dates must be YYYY-MM-DD or DD/MM/YYYY; bad rows: {rows}")
     df["launch_date"] = dates
 
     ids = df["game_id"] if "game_id" in df.columns else pd.Series("", index=df.index)
@@ -82,21 +93,16 @@ def load_game_list(path: Path) -> pd.DataFrame:
 # Full inputs (PLAN.md 4.1) -> internal format
 # ---------------------------------------------------------------------------
 
-NUMERIC_GAME_COLUMNS = ["shares_outstanding", "gbp_per_local"]
-
-
 def load_games(path: Path) -> pd.DataFrame:
     """Game metadata indexed by game_id, with every PLAN.md 4.1 column present.
 
-    Missing text columns become "", missing or unparseable numbers become NaN
-    (the game is then excluded downstream with a reason, not here).
+    Missing columns become "" (a game missing a symbol is excluded downstream with a
+    reason, not here). Extra columns, such as an old share count, are ignored.
     """
     games = load_game_list(path)
     for col in GAME_COLUMNS[1:]:
         if col not in games.columns:
             games[col] = ""
-    for col in NUMERIC_GAME_COLUMNS:
-        games[col] = pd.to_numeric(games[col].astype(str).str.replace(",", "", regex=False), errors="coerce")
     return games[GAME_COLUMNS[1:]]
 
 
@@ -150,7 +156,7 @@ def load_signals(path: Path, signal_cfg: dict, game_ids=None) -> pd.DataFrame:
             log.warning("configured signal %r has no data in %s", name, path.name)
             continue
         keys = ["game_id", "month"]
-        if s["granularity"] == "daily":
+        if s["granularity"] in ("daily", "weekly"):
             dupes = part.duplicated(["game_id", "date"])
             if dupes.any():
                 log.warning("signal %r: %d duplicate daily rows; keeping the last", name, int(dupes.sum()))

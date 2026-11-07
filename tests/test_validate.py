@@ -53,11 +53,11 @@ def first_trading_anchor(g):
     (lambda d: d["games"][0]["popularity"][1].update(mid="2000-01-01"), "mid"),
     (lambda d: d["games"][0]["popularity"][1].update(value="high"), "number or null"),
     (lambda d: d["games"][0]["market"].pop(40), "days"),
-    (lambda d: d["games"][0]["market"][5].update(mv=-1), "positive number"),
+    (lambda d: d["games"][0]["market"][5].update(pct=-120), "above -100"),
     (lambda d: d["games"][0]["market"][5].update(trading="yes"), "boolean"),
-    (lambda d: first_trading_anchor(d["games"][0]).update(implied=1e6), "implied must equal mv"),
+    (lambda d: first_trading_anchor(d["games"][0]).update(implied_pct=3.0), "must be 0 at the anchor"),
     (lambda d: d["games"][0]["verdict"].update(day=7), "verdict.day"),
-    (lambda d: d["games"][0]["verdict"].update(gap_gbp_bn=d["games"][0]["verdict"]["gap_gbp_bn"] + 0.5), "gap_gbp_bn"),
+    (lambda d: d["games"][0]["verdict"].update(pct=d["games"][0]["verdict"]["pct"] + 0.5), "verdict.pct"),
     (lambda d: d["games"][0]["verdict"].update(gap_pct=d["games"][0]["verdict"]["gap_pct"] + 1), "gap_pct"),
     (lambda d: d["games"][0]["verdict"].update(gap_pct=float("nan")), "not valid JSON"),
 ])
@@ -109,8 +109,8 @@ def test_validate_cli(tmp_path, built, capsys):
     good.write_text(json.dumps(built[0]), encoding="utf-8")
     assert validate.main([str(good)]) == 0
     bad_doc = copy.deepcopy(built[0])
-    bad_doc["meta"].pop("currency")
+    bad_doc["meta"].pop("popularity_label")
     bad = tmp_path / "bad.json"
     bad.write_text(json.dumps(bad_doc), encoding="utf-8")
     assert validate.main([str(bad)]) == 1
-    assert "currency" in capsys.readouterr().err
+    assert "popularity_label" in capsys.readouterr().err

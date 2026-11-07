@@ -80,11 +80,9 @@ def test_prices_drop_bad_rows_and_sort(tmp_path):
     assert out["date"].dtype.kind == "M"
 
 
-def test_games_fill_missing_columns_and_parse_numbers(tmp_path):
+def test_games_fill_missing_columns_and_ignore_extras(tmp_path):
     path = csv(tmp_path, "games.csv", "game_name,publisher_name,release_date,shares_outstanding\n"
-               "Game,Pub,2020-01-01,\"1,000\"\n"
-               "Other,Pub,2020-01-01,\n")
+               "Game,Pub,2020-01-01,1000\n")
     games = load_games(path)
-    assert games.loc["game", "shares_outstanding"] == 1000
-    assert pd.isna(games.loc["other", "shares_outstanding"])
     assert games.loc["game", "price_symbol"] == ""
+    assert "shares_outstanding" not in games.columns

@@ -17,28 +17,41 @@ max_price_gap_days = 10
 [site]
 games_per_view = 6       # games picked at random on each page load
 popularity_label = "Popularity (launch month = 100)"
-currency = "GBP"
 
 [paths]
-game_list = "data/games.csv"   # the data teammate's game list
-raw_dir = "data/raw"
+game_list = "data/games.csv"   # the data teammate's game list (input to pipeline.fetch)
+raw_dir = "data/raw"           # pipeline.fetch writes games.csv, signals.csv, prices.csv here
 mock_dir = "data/mock"
 output = "site/data/games.json"
 
-# Popularity signals. Names are unknown until the data teammate reports back;
-# milestone 2 fills these in for the mock data, milestone 6 for the real data.
+[fetch]
+cache_dir = "data/raw/cache"
+user_agent = "LaunchDayAlpha/0.1 (hackathon project; https://github.com/fridge06/WHACK2026)"
+trends_geo = ""                # "" = worldwide, "GB" = UK only
+trends_delay_seconds = 20      # pause between Google Trends requests
+trends_max_retries = 4         # on "too many requests": wait 60s, 120s, 240s, 480s
+
+# Popularity signals for real builds. The names match what pipeline.fetch writes.
 # Each signal declares:
 #   label        readable name shown on the site
 #   weight       relative weight (rescaled over the signals present each month)
-#   granularity  "monthly" or "daily"
-#   rollup       for daily signals: "sum" (counts) or "mean" (levels)
-#
-# Example:
-# [signals.example_signal]
-# label = "Readable name"
-# weight = 1.0
-# granularity = "monthly"
-[signals]
+#   granularity  "monthly", "weekly" or "daily"
+#   rollup       for weekly/daily signals: "sum" (counts) or "mean" (levels)
+[signals.google_trends]
+label = "Google search interest"
+weight = 1.0
+granularity = "weekly"         # Google Trends gives weekly points for a 9-10 month range
+rollup = "mean"
+
+[signals.steam_reviews]
+label = "Steam reviews"
+weight = 1.0
+granularity = "monthly"
+
+[signals.wikipedia_views]
+label = "Wikipedia page views"
+weight = 1.0
+granularity = "monthly"
 
 # ---------------------------------------------------------------------------
 # Mock data (python -m pipeline.make_mock; used by python -m pipeline.build --mock)

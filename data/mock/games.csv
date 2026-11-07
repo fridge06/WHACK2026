@@ -1,24 +1,20 @@
-game_id,name,short_name,publisher,city,ticker,price_symbol,benchmark_symbol,launch_date,steam_appid,wikipedia_title,shares_outstanding,gbp_per_local
-cyberpunk_2077,Cyberpunk 2077,,CD PROJEKT RED,,MOCK-01,MOCK_P01,MOCK_IDX_3,2020-12-10,,,9023306,1.0
-hogwarts_legacy,Hogwarts Legacy,,Warner Bros. Games,,MOCK-02,MOCK_P02,MOCK_IDX_2,2023-02-10,,,108172,0.79
-assassins_creed_shadows,Assassin's Creed Shadows,,Ubisoft,,MOCK-03,MOCK_P03,MOCK_IDX_3,2025-03-20,,,4477257492,0.19
-red_dead_redemption_2,Red Dead Redemption 2,,Rockstar Games,,MOCK-04,MOCK_P04,MOCK_IDX_1,2018-10-26,,,6253416125,0.19
-gta_v,GTA V,,Rockstar Games,,MOCK-04,MOCK_P04,MOCK_IDX_1,2013-09-17,,,6253416125,0.19
-the_witcher_3,The Witcher 3,,CD PROJEKT RED,,MOCK-01,MOCK_P01,MOCK_IDX_3,2015-05-19,,,9023306,1.0
-elden_ring,Elden Ring,,Bandai Namco Entertainment,,MOCK-05,MOCK_P05,MOCK_IDX_2,2022-02-25,,,912806960,0.0053
-ghost_of_tsushima,Ghost of Tsushima,,Sony Interactive Entertainment,,MOCK-06,MOCK_P06,MOCK_IDX_3,2020-07-17,,,80439976,0.0053
-resident_evil_4,Resident Evil 4,,Capcom,,MOCK-07,MOCK_P07,MOCK_IDX_2,2023-03-24,,,10957390639,0.0053
-final_fantasy_xvi,Final Fantasy XVI,,Square Enix,,MOCK-08,MOCK_P08,MOCK_IDX_1,2023-06-22,,,3386483144497,0.0053
-assassins_creed_valhalla,Assassin's Creed Valhalla,,Ubisoft,,MOCK-03,MOCK_P03,MOCK_IDX_3,2020-11-10,,,4477257492,0.19
-far_cry_6,Far Cry 6,,Ubisoft,,MOCK-03,MOCK_P03,MOCK_IDX_3,2021-10-07,,,4477257492,0.19
-forza_horizon_5,Forza Horizon 5,,Xbox Game Studios,,MOCK-09,MOCK_P09,MOCK_IDX_3,2021-11-09,,,36898772893,0.19
-diablo_iv,Diablo IV,,Blizzard Entertainment,,MOCK-10,MOCK_P10,MOCK_IDX_3,2023-06-06,,,563710984,0.0053
-doom_eternal,DOOM Eternal,,Bethesda Softworks,,MOCK-11,MOCK_P11,MOCK_IDX_2,2020-03-20,,,3446829769,0.19
-horizon_forbidden_west,Horizon Forbidden West,,Sony Interactive Entertainment,,MOCK-06,MOCK_P06,MOCK_IDX_3,2022-02-18,,,80439976,0.0053
-god_of_war,God of War,,Sony Interactive Entertainment,,MOCK-06,MOCK_P06,MOCK_IDX_3,2018-04-20,,,80439976,0.0053
-horizon_zero_dawn,Horizon Zero Dawn,,Sony Interactive Entertainment,,MOCK-06,MOCK_P06,MOCK_IDX_3,2017-02-28,,,80439976,0.0053
-minecraft,Minecraft,,Mojang Studios,,MOCK-12,MOCK_P12,MOCK_IDX_2,2011-11-18,,,4179353,0.79
-subnautica,Subnautica,,Unknown Worlds Entertainment,,MOCK-13,MOCK_P13,MOCK_IDX_1,2014-12-16,,,93791175,0.19
-rust,Rust,,Facepunch Studios,,MOCK-14,MOCK_P14,MOCK_IDX_2,2013-12-11,,,45369616474,0.0053
-no_mans_sky,No Man's Sky,,Hello Games,,MOCK-15,MOCK_P15,MOCK_IDX_3,2016-08-09,,,3349681344374,0.0053
-lethal_company,Lethal Company,,Zeekerss,,MOCK-16,MOCK_P16,MOCK_IDX_3,2023-10-23,,,75426586,0.0053
+game_id,name,short_name,publisher,city,ticker,price_symbol,benchmark_symbol,launch_date,steam_appid,wikipedia_title
+cyberpunk_2077,Cyberpunk 2077,,CD PROJEKT RED,,MOCK-01,MOCK_P01,MOCK_IDX_3,2020-12-10,,
+hogwarts_legacy,Hogwarts Legacy,,Warner Bros. Games,,MOCK-02,MOCK_P02,MOCK_IDX_1,2023-02-10,,
+assassins_creed_shadows,Assassin's Creed Shadows,,Ubisoft,,MOCK-03,MOCK_P03,MOCK_IDX_3,2025-03-20,,
+red_dead_redemption_2,Red Dead Redemption 2,,Rockstar Games,,MOCK-04,MOCK_P04,MOCK_IDX_3,2018-10-26,,
+gta_v,GTA V,,Rockstar Games,,MOCK-04,MOCK_P04,MOCK_IDX_3,2013-09-17,,
+the_witcher_3,The Witcher 3,,CD PROJEKT RED,,MOCK-01,MOCK_P01,MOCK_IDX_3,2015-05-19,,
+elden_ring,Elden Ring,,Bandai Namco Entertainment,,MOCK-05,MOCK_P05,MOCK_IDX_1,2022-02-25,,
+ghost_of_tsushima,Ghost of Tsushima,,Sony Interactive Entertainment,,MOCK-06,MOCK_P06,MOCK_IDX_3,2020-07-17,,
+resident_evil_4,Resident Evil 4,,Capcom,,MOCK-07,MOCK_P07,MOCK_IDX_2,2023-03-24,,
+final_fantasy_xvi,Final Fantasy XVI,,Square Enix,,MOCK-08,MOCK_P08,MOCK_IDX_3,2023-06-22,,
+assassins_creed_valhalla,Assassin's Creed Valhalla,,Ubisoft,,MOCK-03,MOCK_P03,MOCK_IDX_3,2020-11-10,,
+far_cry_6,Far Cry 6,,Ubisoft,,MOCK-03,MOCK_P03,MOCK_IDX_3,2021-10-07,,
+forza_horizon_5,Forza Horizon 5,,Xbox Game Studios,,MOCK-09,MOCK_P09,MOCK_IDX_3,2021-11-09,,
+diablo_iv,Diablo IV,,Blizzard Entertainment,,MOCK-10,MOCK_P10,MOCK_IDX_2,2023-06-06,,
+doom_eternal,DOOM Eternal,,Bethesda Softworks,,MOCK-11,MOCK_P11,MOCK_IDX_3,2020-03-20,,
+horizon_forbidden_west,Horizon Forbidden West,,Sony Interactive Entertainment,,MOCK-06,MOCK_P06,MOCK_IDX_3,2022-02-18,,
+god_of_war,God of War,,Sony Interactive Entertainment,,MOCK-06,MOCK_P06,MOCK_IDX_3,2018-04-20,,
+horizon_zero_dawn,Horizon Zero Dawn,,Sony Interactive Entertainment,,MOCK-06,MOCK_P06,MOCK_IDX_3,2017-02-28,,
+subnautica,Subnautica,,Unknown Worlds Entertainment,,MOCK-12,MOCK_P12,MOCK_IDX_2,2014-12-16,,

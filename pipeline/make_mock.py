@@ -31,7 +31,6 @@ from pipeline.config import ROOT, load_config
 from pipeline.dates import window_bounds
 from pipeline.loaders import GAME_COLUMNS, load_game_list
 
-FX_CHOICES = [1.0, 0.79, 0.0053, 0.19, 0.086]  # placeholder GBP per unit of local currency
 N_BENCHMARKS = 3
 PRICE_PAD_BEFORE = pd.Timedelta(days=14)  # price rows start this far before each window...
 PRICE_PAD_AFTER = pd.Timedelta(days=7)    # ...and end this far after it
@@ -73,11 +72,9 @@ def make_companies(publishers: list[str], rng: np.random.Generator) -> dict[str,
             "ticker": f"MOCK-{i:02d}",
             "symbol": f"MOCK_P{i:02d}",
             "benchmark": f"MOCK_IDX_{int(rng.integers(1, N_BENCHMARKS + 1))}",
-            "fx": float(rng.choice(FX_CHOICES)),
             "beta": float(rng.uniform(0.6, 1.4)),
-            "start_price": float(rng.uniform(10, 400)),
-            # log-uniform from £100m to £3tn, so formatting gets exercised at both ends
-            "target_mv_bn": float(np.exp(rng.uniform(np.log(0.1), np.log(3000)))),
+            # log-uniform share price, from pennies-like to yen-like levels
+            "start_price": float(np.exp(rng.uniform(np.log(1), np.log(20000)))),
         }
     return companies
 
@@ -85,7 +82,7 @@ def make_companies(publishers: list[str], rng: np.random.Generator) -> dict[str,
 def make_prices(games: pd.DataFrame, companies: dict, rng: np.random.Generator, delisted: dict[str, pd.Timestamp]):
     """Daily closes on weekdays only, with ~1% of weekdays missing (holidays).
 
-    Returns (prices DataFrame, {publisher: close on its first launch's anchor day}).
+    Returns the prices DataFrame.
     """
     start = games["window_from"].min() - pd.Timedelta(days=60)
     end = games["window_to"].max() + pd.Timedelta(days=30)
@@ -101,7 +98,6 @@ def make_prices(games: pd.DataFrame, companies: dict, rng: np.random.Generator, 
         bench_close[sym] = float(rng.uniform(800, 30000)) * np.exp(np.cumsum(lr))
 
     company_close = {}
-    first_close = {}
     for pub, co in companies.items():
         launches = games.loc[games["publisher"] == pub, "launch_date"]
         abnormal = np.zeros(n)
@@ -116,8 +112,6 @@ def make_prices(games: pd.DataFrame, companies: dict, rng: np.random.Generator, 
         lr = co["beta"] * bench_lr[co["benchmark"]] + rng.normal(0, 0.016, n)
         close = co["start_price"] * np.exp(np.cumsum(lr) + abnormal)
         company_close[co["symbol"]] = close
-        first_anchor = int(bdays.searchsorted(launches.min(), side="right")) - 1
-        first_close[pub] = float(close[max(first_anchor, 0)])
 
     # Only write rows each symbol actually needs: the union of its games' padded windows.
     def needed(symbol_games: pd.DataFrame) -> np.ndarray:
@@ -142,7 +136,7 @@ def make_prices(games: pd.DataFrame, companies: dict, rng: np.random.Generator, 
 
     prices = pd.concat(frames, ignore_index=True)
     prices["close"] = prices["close"].round(4)
-    return prices, first_close
+    return prices
 
 
 def make_signals(games: pd.DataFrame, signal_cfg: dict, cfg_window: dict, rng: np.random.Generator) -> pd.DataFrame:
@@ -220,7 +214,7 @@ def generate(games: pd.DataFrame, cfg: dict, seed: int) -> dict:
     missing_signal = (daily or list(signal_cfg))[0]
     gap_signal = (monthly or list(signal_cfg))[-1]
 
-    prices, first_close = make_prices(games, companies, rng, delisted)
+    prices = make_prices(games, companies, rng, delisted)
     signals = make_signals(games, signal_cfg, win, rng)
 
     months = signals["date"].map(_month_of)
@@ -252,10 +246,6 @@ def generate(games: pd.DataFrame, cfg: dict, seed: int) -> dict:
     out["launch_date"] = games["launch_date"].dt.strftime("%Y-%m-%d")
     out["steam_appid"] = ""
     out["wikipedia_title"] = ""
-    out["shares_outstanding"] = games["publisher"].map(
-        lambda p: int(round(companies[p]["target_mv_bn"] * 1e9 / (first_close[p] * companies[p]["fx"])))
-    )
-    out["gbp_per_local"] = games["publisher"].map(lambda p: companies[p]["fx"])
     out = out.reset_index()[GAME_COLUMNS]
 
     prices = prices.sort_values(["symbol", "date"]).reset_index(drop=True)

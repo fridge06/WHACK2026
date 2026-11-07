@@ -5,7 +5,7 @@ Loads inputs, computes popularity (PLAN.md 5.1), market value (5.2) and verdicts
 data problems are excluded and listed in the build report with the reason.
 
   --mock   read placeholder inputs from data/mock/ (meta.placeholder = true)
-  default  read the game list from data/games.csv and signals/prices from data/raw/
+  default  read games.csv, signals.csv and prices.csv from data/raw/ (written by pipeline.fetch)
 """
 
 from __future__ import annotations
@@ -36,7 +36,7 @@ def input_paths(cfg: dict, mock: bool) -> dict[str, Path]:
         base = ROOT / paths["mock_dir"]
         return {"games": base / "games.csv", "signals": base / "signals.csv", "prices": base / "prices.csv"}
     base = ROOT / paths["raw_dir"]
-    return {"games": ROOT / paths["game_list"], "signals": base / "signals.csv", "prices": base / "prices.csv"}
+    return {"games": base / "games.csv", "signals": base / "signals.csv", "prices": base / "prices.csv"}
 
 
 def _text_or_none(value) -> str | None:
@@ -50,7 +50,8 @@ def build(cfg: dict, mock: bool) -> tuple[dict, dict]:
     paths = input_paths(cfg, mock)
     for kind, path in paths.items():
         if not path.exists():
-            raise FileNotFoundError(f"{kind} input not found: {path}")
+            hint = "run python -m pipeline.make_mock" if mock else "run python -m pipeline.fetch"
+            raise FileNotFoundError(f"{kind} input not found: {path} ({hint})")
 
     games = load_games(paths["games"])
     signals = load_signals(paths["signals"], signal_cfg, game_ids=set(games.index))
@@ -95,7 +96,6 @@ def build(cfg: dict, mock: bool) -> tuple[dict, dict]:
         "meta": {
             "generated_at": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
             "placeholder": bool(mock),
-            "currency": cfg["site"]["currency"],
             "months_before": before,
             "months_after": after,
             "games_per_view": cfg["site"]["games_per_view"],

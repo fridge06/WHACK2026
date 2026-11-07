@@ -20,7 +20,7 @@
      Formatting
   ------------------------------------------------------------------- */
   const nf = (min, max) => new Intl.NumberFormat("en-GB", { minimumFractionDigits: min, maximumFractionDigits: max });
-  const nf0 = nf(0, 0), nf1 = nf(1, 1), nf2 = nf(2, 2);
+  const nf0 = nf(0, 0), nf1 = nf(1, 1);
 
   function utc(s) {
     const [y, m, d] = s.split("-").map(Number);
@@ -36,18 +36,11 @@
   function shortMonth(ms) {
     return MONTHS[new Date(ms).getUTCMonth()];
   }
-  // Amounts in £bn -> "£1.8bn", "£420m", "£1.2tn". Under £1bn shows millions.
-  function money(bn) {
-    const a = Math.abs(bn);
-    if (a >= 1000) return "£" + nf1.format(a / 1000) + "tn";
-    if (a >= 1) return "£" + nf1.format(a) + "bn";
-    const m = a * 1000;
-    return "£" + (m < 10 ? nf1 : nf0).format(m) + "m";
-  }
-  function moneyPrecise(bn) {
-    if (bn >= 1000) return "£" + nf2.format(bn / 1000) + "tn";
-    if (bn >= 1) return "£" + nf2.format(bn) + "bn";
-    return "£" + nf1.format(bn * 1000) + "m";
+  // Signed percentage: "+12.4%", "−8.0%", "0%".
+  function pct(v, f) {
+    const fmt = f || nf1;
+    if (Math.abs(v) < 0.05 && fmt === nf1) return "0%";
+    return (v > 0 ? "+" : v < 0 ? MINUS : "") + fmt.format(Math.abs(v)) + "%";
   }
   function dayLabel(d) {
     if (d === 0) return "launch day";
@@ -68,14 +61,12 @@
     for (let v = start; v <= end + step * 1e-9; v += step) ticks.push(+v.toFixed(10));
     return ticks;
   }
-  // Right-axis labels: one unit (m, bn or tn) for the whole axis, decimals from the step.
-  function axisMoney(ticks) {
-    const top = ticks[ticks.length - 1];
-    const step = ticks.length > 1 ? ticks[1] - ticks[0] : top;
-    const [div, unit] = top >= 1000 ? [1000, "tn"] : top >= 1 ? [1, "bn"] : [0.001, "m"];
-    const dec = Math.min(3, Math.max(0, Math.ceil(-Math.log10(step / div) - 1e-9)));
+  // Right-axis labels in % change, decimals from the tick step.
+  function axisPct(ticks) {
+    const step = ticks.length > 1 ? ticks[1] - ticks[0] : 1;
+    const dec = Math.min(2, Math.max(0, Math.ceil(-Math.log10(step) - 1e-9)));
     const f = nf(dec, dec);
-    return (v) => "£" + f.format(v / div) + unit;
+    return (v) => (Math.abs(v) < 1e-9 ? "0%" : pct(v, f));
   }
 
   /* ------------------------------------------------------------------
@@ -119,15 +110,17 @@
   ------------------------------------------------------------------- */
   let META = null;
 
+  // "In its first month, CD Projekt's value fell 23.6% behind its market:
+  //  down 30.1%, while its market fell 6.5%."
   function verdictHtml(g) {
     const v = g.verdict;
     const pub = escapeHtml(g.publisher);
-    const pct = (v.gap_pct < 0 ? MINUS : "+") + nf1.format(Math.abs(v.gap_pct)) + "%";
-    const amount = `<strong>${money(v.gap_gbp_bn)}</strong>`;
-    const lead = v.gap_gbp_bn < 0
-      ? `${escapeHtml(META.verdict_phrase)}, the launch wiped ${amount} off ${pub}’s value`
-      : `${escapeHtml(META.verdict_phrase)}, the launch added ${amount} to ${pub}’s value`;
-    return `${lead} (${pct}), beyond what its market did.`;
+    const gap = `<strong>${nf1.format(Math.abs(v.gap_pct))}%</strong>`;
+    const lead = v.gap_pct < 0
+      ? `${escapeHtml(META.verdict_phrase)}, ${pub}’s value fell ${gap} behind its market`
+      : `${escapeHtml(META.verdict_phrase)}, ${pub}’s value pulled ${gap} ahead of its market`;
+    const move = (x, up, down) => (Math.abs(x) < 0.05 ? "was flat" : `${x > 0 ? up : down} ${nf1.format(Math.abs(x))}%`);
+    return `${lead}: ${move(v.pct, "up", "down")}, while its market ${move(v.implied_pct, "rose", "fell")}.`;
   }
 
   function metaLine(g) {
@@ -182,7 +175,8 @@
     const W = Math.max(300, box.clientWidth);
     const narrow = W < 560;
     const H = Math.round(Math.max(280, Math.min(460, W * 0.5)));
-    const m = { l: narrow ? 34 : 44, r: narrow ? 56 : 66, t: 50, b: 30 };
+    // Narrow screens stack the two axis titles, so the plot starts lower.
+    const m = { l: narrow ? 34 : 44, r: narrow ? 52 : 60, t: narrow ? 66 : 50, b: 30 };
     const iw = W - m.l - m.r, ih = H - m.t - m.b;
     const f1 = (n) => n.toFixed(1);
 
@@ -196,25 +190,27 @@
     const pTop = pTicks[pTicks.length - 1];
     const yL = (v) => m.t + ih - (v / pTop) * ih;
 
-    const vals = g.market.flatMap((p) => [p.mv, p.implied]);
+    // Right axis: % change since launch, always including 0%.
+    const vals = g.market.flatMap((p) => [p.pct, p.implied_pct]).concat([0]);
     const lo = Math.min(...vals), hi = Math.max(...vals);
-    const pad = (hi - lo) * 0.12 || hi * 0.05;
-    const vTicks = niceTicks(Math.max(0, lo - pad), hi + pad, 4);
+    const pad = (hi - lo) * 0.12 || 1;
+    const vTicks = niceTicks(lo - pad, hi + pad, 4);
     const vLo = vTicks[0], vHi = vTicks[vTicks.length - 1];
     const yR = (v) => m.t + ih - ((v - vLo) / (vHi - vLo)) * ih;
-    const vFmt = axisMoney(vTicks);
+    const vFmt = axisPct(vTicks);
 
     const linePath = (idx, fx, fy) => idx.map((i, k) => (k ? "L" : "M") + f1(fx(i)) + "," + f1(fy(i))).join("");
     const all = g.market.map((_, i) => i);
-    const mvLine = linePath(all, (i) => x(g._ms[i]), (i) => yR(g.market[i].mv));
-    const benchLine = linePath(all, (i) => x(g._ms[i]), (i) => yR(g.market[i].implied));
+    const mvLine = linePath(all, (i) => x(g._ms[i]), (i) => yR(g.market[i].pct));
+    const benchLine = linePath(all, (i) => x(g._ms[i]), (i) => yR(g.market[i].implied_pct));
     const post = all.filter((i) => g.market[i].d >= 0);
-    const gapArea = linePath(post, (i) => x(g._ms[i]), (i) => yR(g.market[i].mv)) +
-      post.slice().reverse().map((i) => "L" + f1(x(g._ms[i])) + "," + f1(yR(g.market[i].implied))).join("") + "Z";
+    const gapArea = linePath(post, (i) => x(g._ms[i]), (i) => yR(g.market[i].pct)) +
+      post.slice().reverse().map((i) => "L" + f1(x(g._ms[i])) + "," + f1(yR(g.market[i].implied_pct))).join("") + "Z";
 
     let s = "";
     vTicks.forEach((v) => {
-      s += `<line class="grid" x1="${m.l}" x2="${m.l + iw}" y1="${f1(yR(v))}" y2="${f1(yR(v))}" />`;
+      const cls = Math.abs(v) < 1e-9 ? "grid zero" : "grid";
+      s += `<line class="${cls}" x1="${m.l}" x2="${m.l + iw}" y1="${f1(yR(v))}" y2="${f1(yR(v))}" />`;
       s += `<text x="${m.l + iw + 8}" y="${f1(yR(v) + 4)}">${vFmt(v)}</text>`;
     });
     pTicks.forEach((v) => {
@@ -237,7 +233,7 @@
     });
 
     s += `<text class="axis-title-pop" x="0" y="14">${escapeHtml(META.popularity_label)}</text>`;
-    s += `<text class="axis-title-mv" x="${W}" y="14" text-anchor="end">Market value</text>`;
+    s += `<text class="axis-title-mv" x="${W}" y="${narrow ? 32 : 14}" text-anchor="end">Market value, change since launch</text>`;
 
     // Popularity: line and light area per run of known months; gaps stay gaps.
     const segs = popSegments(g);
@@ -319,7 +315,7 @@
     $("hoverLine").setAttribute("x1", hx);
     $("hoverLine").setAttribute("x2", hx);
     $("hoverMv").setAttribute("cx", hx);
-    $("hoverMv").setAttribute("cy", yR(p.mv));
+    $("hoverMv").setAttribute("cy", yR(p.pct));
     const hp = $("hoverPop");
     if (pop && pop.value != null) {
       hp.style.display = "";
@@ -333,8 +329,8 @@
     const popText = pop && pop.value != null ? nf1.format(pop.value) : "no data";
     tip.innerHTML =
       `<b>${fmtDate(g._ms[i])}</b>, ${dayLabel(p.d)}<br>` +
-      `Market value: ${moneyPrecise(p.mv)}<br>` +
-      `If it had moved with its market: ${moneyPrecise(p.implied)}<br>` +
+      `Market value: ${pct(p.pct)} since launch<br>` +
+      `If it had moved with its market: ${pct(p.implied_pct)}<br>` +
       (p.trading ? "" : `<span class="dim">Market closed: last close shown</span><br>`) +
       `Popularity (${fmtMonthYear(utc(p.date.slice(0, 7)))}): ${popText}`;
     tip.style.opacity = 1;
@@ -446,8 +442,8 @@
     }
     parts.push(
       "Historical data, not live. Popularity is monthly and indexed so the launch month is 100. " +
-      "Market value is daily: markets close at weekends and holidays, so the last close is carried across those days. " +
-      "Each game uses one exchange rate, fixed on launch day, so currency swings don’t affect the result."
+      "Market value is shown as the daily % change since launch day, which equals the change in the share price " +
+      "(the number of shares barely moves over a few months). Markets close at weekends and holidays, so the last close is carried across those days."
     );
     $("note").textContent = parts.join(" ");
   }

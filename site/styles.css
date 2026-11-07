@@ -125,6 +125,7 @@ code { font-family: ui-monospace, SFMono-Regular, Consolas, monospace; font-size
 .chart .axis-title-mv { fill: var(--mv); font-weight: 500; }
 .chart .launch-label { fill: var(--ink); font-weight: 500; }
 .chart .grid { stroke: var(--grid); }
+.chart .grid.zero { stroke: var(--axis); }
 .chart .tick { stroke: var(--axis); }
 .chart .baseline { stroke: var(--axis); }
 .chart .launch-line { stroke: var(--ink); stroke-width: 1.5; }

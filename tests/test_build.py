@@ -32,7 +32,7 @@ def test_mock_build_output_shape(mock_build):
     for g in doc["games"]:
         assert len(g["popularity"]) == 10
         anchor = [m for m in g["market"] if m["d"] <= 0 and m["trading"]][-1]
-        assert anchor["mv"] == anchor["implied"]
+        assert anchor["pct"] == 0 and anchor["implied_pct"] == 0
         launch = next(p for p in g["popularity"] if p["m"] == 0)
         assert launch["value"] == 100
 
@@ -44,8 +44,9 @@ def test_main_writes_json(tmp_path):
     assert doc["games"]
 
 
-def test_real_build_without_signals_fails_clearly(cfg, capsys):
-    if cfg.get("signals"):
-        pytest.skip("real signals are configured")
-    assert build.main(["--out", "unused.json"]) == 1
-    assert "no popularity signals configured" in capsys.readouterr().err
+def test_real_build_without_signals_fails_clearly(cfg):
+    import copy
+    no_signals = copy.deepcopy(cfg)
+    no_signals["signals"] = {}
+    with pytest.raises(ValueError, match="no popularity signals configured"):
+        build.build(no_signals, mock=False)
