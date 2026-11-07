@@ -1,1 +1,5 @@
+X axis: Steam, Google Trends
+Y axis: Alpha Vantage, Nasdaq Data Link
+
+
 
