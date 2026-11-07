@@ -1,5 +1,7 @@
-X axis: Steam, Google Trends
-Y axis: Alpha Vantage, Nasdaq Data Link
+X_1 axis: Steam, Google Trends
+X_2 axis: Alpha Vantage, Nasdaq Data Link
+Y axis: Time
 
+Game Name, Steam ID, Publisher name, Publisher name  
 
 
