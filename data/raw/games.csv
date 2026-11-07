@@ -1,20 +1,17 @@
-game_id,name,short_name,publisher,city,ticker,price_symbol,benchmark_symbol,launch_date,steam_appid,wikipedia_title
-cyberpunk_2077,Cyberpunk 2077,,CD PROJEKT RED,Warsaw,CDR,CDR.WA,^STOXX,2020-12-10,1091500,Cyberpunk 2077
-hogwarts_legacy,Hogwarts Legacy,,Warner Bros. Games,Stuttgart,J5A,J5A.SG,EXXT.DE,2023-02-10,990080,Hogwarts Legacy
-assassins_creed_shadows,Assassin's Creed Shadows,,Ubisoft,Paris,UBI,UBI.PA,^FCHI,2025-03-20,3159330,Assassin's Creed Shadows
-red_dead_redemption_2,Red Dead Redemption 2,,Rockstar Games,New York,TTWO,TTWO,^IXIC,2018-10-26,1174180,Red Dead Redemption 2
-gta_v,GTA V,,Rockstar Games,New York,TTWO,TTWO,^IXIC,2013-09-17,271590,
-the_witcher_3,The Witcher 3,,CD PROJEKT RED,Warsaw,CDR,CDR.WA,^STOXX,2015-05-19,292030,The Witcher 3: Wild Hunt
-elden_ring,Elden Ring,,Bandai Namco Entertainment,Tokyo,7832,7832.T,^N225,2022-02-25,1245620,Elden Ring
-ghost_of_tsushima,Ghost of Tsushima,,Sony Interactive Entertainment,New York,SONY,SONY,^NYA,2020-07-17,2215430,Ghost of Tsushima
-resident_evil_4,Resident Evil 4,,Capcom,Tokyo,9697,9697.T,^N225,2023-03-24,2050650,Resident Evil 4 (2023 video game)
-final_fantasy_xvi,Final Fantasy XVI,,Square Enix,Tokyo,9684,9684.T,^N225,2023-06-22,2515020,Final Fantasy XVI
-assassins_creed_valhalla,Assassin's Creed Valhalla,,Ubisoft,Paris,UBI,UBI.PA,^FCHI,2020-11-10,2208920,Assassin's Creed Valhalla
-far_cry_6,Far Cry 6,,Ubisoft,Paris,UBI,UBI.PA,^FCHI,2021-10-07,2369390,Far Cry 6
-forza_horizon_5,Forza Horizon 5,,Xbox Game Studios,New York,MSFT,MSFT,^IXIC,2021-11-09,1551360,Forza Horizon 5
-diablo_iv,Diablo IV,,Blizzard Entertainment,,,,,2023-06-06,2344520,Diablo IV
-doom_eternal,DOOM Eternal,,Bethesda Softworks,,,,,2020-03-20,782330,Doom Eternal
-horizon_forbidden_west,Horizon Forbidden West,,Sony Interactive Entertainment,New York,SONY,SONY,^NYA,2022-02-18,2420110,Horizon Forbidden West
-god_of_war,God of War,,Sony Interactive Entertainment,New York,SONY,SONY,^NYA,2018-04-20,1593500,God of War (2018 video game)
-horizon_zero_dawn,Horizon Zero Dawn,,Sony Interactive Entertainment,New York,SONY,SONY,^NYA,2017-02-28,1151640,Horizon Zero Dawn
-subnautica,Subnautica,,Unknown Worlds Entertainment,,,,,2014-12-16,264710,
+game_id,name,publisher,city,ticker,price_symbol,benchmark_symbol,launch_date,steam_appid,wikipedia_title
+cyberpunk_2077,Cyberpunk 2077,CD PROJEKT RED,Warsaw,CDR,CDR.WA,^STOXX,2020-12-10,1091500,Cyberpunk 2077
+hogwarts_legacy,Hogwarts Legacy,Warner Bros. Games,Stuttgart,J5A,J5A.SG,EXXT.DE,2023-02-10,990080,Hogwarts Legacy
+assassins_creed_shadows,Assassin's Creed Shadows,Ubisoft,Paris,UBI,UBI.PA,^FCHI,2025-03-20,3159330,Assassin's Creed Shadows
+red_dead_redemption_2,Red Dead Redemption 2,Rockstar Games,New York,TTWO,TTWO,^IXIC,2018-10-26,1174180,Red Dead Redemption 2
+gta_v,GTA V,Rockstar Games,New York,TTWO,TTWO,^IXIC,2013-09-17,271590,Grand Theft Auto V
+the_witcher_3,The Witcher 3,CD PROJEKT RED,Warsaw,CDR,CDR.WA,^STOXX,2015-05-19,292030,The Witcher 3: Wild Hunt
+elden_ring,Elden Ring,Bandai Namco Entertainment,Tokyo,7832,7832.T,^N225,2022-02-25,1245620,Elden Ring
+ghost_of_tsushima,Ghost of Tsushima,Sony Interactive Entertainment,New York,SONY,SONY,^NYA,2020-07-17,2215430,Ghost of Tsushima
+resident_evil_4,Resident Evil 4,Capcom,Tokyo,9697,9697.T,^N225,2023-03-24,2050650,Resident Evil 4 (2023 video game)
+final_fantasy_xvi,Final Fantasy XVI,Square Enix,Tokyo,9684,9684.T,^N225,2023-06-22,2515020,Final Fantasy XVI
+assassins_creed_valhalla,Assassin's Creed Valhalla,Ubisoft,Paris,UBI,UBI.PA,^FCHI,2020-11-10,2208920,Assassin's Creed Valhalla
+far_cry_6,Far Cry 6,Ubisoft,Paris,UBI,UBI.PA,^FCHI,2021-10-07,2369390,Far Cry 6
+forza_horizon_5,Forza Horizon 5,Xbox Game Studios,New York,MSFT,MSFT,^IXIC,2021-11-09,1551360,Forza Horizon 5
+horizon_forbidden_west,Horizon Forbidden West,Sony Interactive Entertainment,New York,SONY,SONY,^NYA,2022-02-18,2420110,Horizon Forbidden West
+god_of_war,God of War,Sony Interactive Entertainment,New York,SONY,SONY,^NYA,2018-04-20,1593500,God of War (2018 video game)
+horizon_zero_dawn,Horizon Zero Dawn,Sony Interactive Entertainment,New York,SONY,SONY,^NYA,2017-02-28,1151640,Horizon Zero Dawn
