@@ -28,6 +28,7 @@ GAME_COLUMN_ALIASES = {
     "game_name": "name",
     "publisher_name": "publisher",
     "release_date": "launch_date",
+    "alpha_release_date": "launch_date",
 }
 
 
