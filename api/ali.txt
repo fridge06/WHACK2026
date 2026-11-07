@@ -1,0 +1,19 @@
+The website should have a cycle of 6 games with thteir names, publishers name, then agraph.
+This graph would have 1 x-axis (time) and 2 (sclaed) y-axi (populatiry measure, stock price).
+
+Relevenent needed data is: Game Name, Steam ID, Publisher name, Publisher name  
+
+A tool that displays the divergences between consumer popularity and publisher market valuation, measured using historical gaming and financial data.
+
+
+Website desing:
+Dark mode button.
+Main page, Info page
+Block:
+- Name
+- Alpha Release Data
+- Publishers name
+- Graph
+  - Y_1 axis: Steam, Google Trends, Reddit
+  - Y_2 axis: Alpha Vantage, Nasdaq Data Link
+  - X axis: Time
