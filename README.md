@@ -33,7 +33,10 @@ pytest                          # run the tests
 python -m pipeline.make_mock    # regenerate placeholder inputs in data/mock/ from data/games.csv
 python -m pipeline.build --mock # build site/data/games.json from mock data (milestone 3)
 python -m pipeline.build        # build from real data in data/raw/ (milestone 6)
+python -m pipeline.validate     # re-check an existing site/data/games.json against the contract
 ```
+
+Every build prints a coverage report (months of data per signal per game, missing launch-month bases, exclusions with reasons) and validates its output before writing. If the output breaks the contract in PLAN.md 4.2, the build fails and writes nothing.
 
 Mock data is invented: symbols like `MOCK_P01` are fake, games from the same publisher share one fake company, and a few games are broken on purpose to exercise validation (listed in `data/mock/expected_issues.json`). The mock signals are defined under `[mock.signals]` in `pipeline/config.toml`; the real ones go under `[signals]`.
 

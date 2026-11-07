@@ -25,6 +25,7 @@ from pipeline.errors import GameDataError
 from pipeline.loaders import load_games, load_prices, load_signals
 from pipeline.market import compute_market, verdict_phrase
 from pipeline.popularity import compute_popularity
+from pipeline.validate import ContractError, check_output, coverage, format_coverage
 
 log = logging.getLogger("pipeline")
 
@@ -108,12 +109,21 @@ def build(cfg: dict, mock: bool) -> tuple[dict, dict]:
         },
         "games": out_games,
     }
-    report = {"included": [g["id"] for g in out_games], "excluded": excluded, "warnings": warnings}
+    report = {
+        "included": [g["id"] for g in out_games],
+        "excluded": excluded,
+        "warnings": warnings,
+        "coverage": coverage(games, signals, signal_cfg, before, after, excluded),
+        "n_months": before + after + 1,
+    }
     return doc, report
 
 
-def print_report(report: dict, out: Path) -> None:
-    print(f"Included {len(report['included'])} game(s), excluded {len(report['excluded'])}. Wrote {out}")
+def print_report(report: dict, out: Path | None) -> None:
+    print(format_coverage(report["coverage"], report["n_months"]))
+    print()
+    written = f" Wrote {out}" if out else " Nothing written."
+    print(f"Included {len(report['included'])} game(s), excluded {len(report['excluded'])}.{written}")
     for gid, why in report["excluded"].items():
         print(f"  EXCLUDED {gid}: {why}")
     for gid, notes in report["warnings"].items():
@@ -136,8 +146,14 @@ def main(argv: list[str] | None = None) -> int:
         print(f"Build failed: {err}", file=sys.stderr)
         return 1
     if not doc["games"]:
-        print_report(report, args.out)
+        print_report(report, None)
         print("Build failed: no game passed validation; nothing written.", file=sys.stderr)
+        return 1
+    try:
+        check_output(doc)
+    except ContractError as err:
+        print_report(report, None)
+        print(f"Build failed: {err}", file=sys.stderr)
         return 1
 
     args.out.parent.mkdir(parents=True, exist_ok=True)
