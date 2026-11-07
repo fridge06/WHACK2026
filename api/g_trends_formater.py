@@ -1,12 +1,17 @@
 r"""
 Build Google Trends links for every game in games.csv and open them in your browser.
 
-For each row, two links are made: one searching the game name and one searching
-its publisher, both over the window [release date - 3 months, release date + 6 months].
-They're written to link.txt, one per line, alternating game, publisher, game, publisher...
+Each game and each publisher gets two links:
+    before: 3 months before the release date, up to the day before release
+    after:  the release date, up to 6 months after release
+(Use --combined for one single link spanning the whole 3-months-before to 6-months-after range.)
+
+Links are written to link.txt, one per line, in this order for every row:
+    game (before), game (after), publisher (before), publisher (after)
 
 Usage:
     python make_trends_links.py                  # write link.txt, then open every link
+    python make_trends_links.py --combined       # one link per term instead of before/after
     python make_trends_links.py --no-open        # only write link.txt
     python make_trends_links.py --delay 5        # wait 5 seconds between tabs
     python make_trends_links.py --csv C:\path\to\games.csv --out C:\path\to\link.txt
@@ -17,7 +22,7 @@ import calendar
 import csv
 import time
 import webbrowser
-from datetime import date, datetime
+from datetime import date, datetime, timedelta
 from pathlib import Path
 from urllib.parse import quote, urlencode
 
@@ -74,20 +79,33 @@ def read_games(csv_path: Path) -> list[tuple[str, str, date]]:
     return games
 
 
-def make_links(games, geo="GB", months_before=MONTHS_BEFORE, months_after=MONTHS_AFTER):
-    """Return a list of (label, url): game, publisher, game, publisher, ..."""
+def get_windows(release: date, months_before: int, months_after: int, combined: bool):
+    """Return [(label, start, end), ...] date windows for one release date."""
+    start = add_months(release, -months_before)
+    end = add_months(release, months_after)
+    if combined:
+        return [("", start, end)]
+    return [
+        ("before", start, release - timedelta(days=1)),
+        ("after", release, end),  # release day itself counts as 'after'
+    ]
+
+
+def make_links(games, geo="GB", months_before=MONTHS_BEFORE, months_after=MONTHS_AFTER, combined=False):
+    """Return a list of (label, url): game windows first, then publisher windows, per row."""
     today = date.today()
     links = []
     for game, publisher, release in games:
-        start = add_months(release, -months_before)
-        end = min(add_months(release, months_after), today)  # Trends can't look into the future
-        if start >= end:
-            print(f"Skipping {game}: its date window hasn't happened yet")
-            continue
-
-        links.append((game, build_url(game, start, end, geo)))
-        if publisher:
-            links.append((publisher, build_url(publisher, start, end, geo)))
+        for term in (game, publisher):
+            if not term:
+                continue
+            for window_label, start, end in get_windows(release, months_before, months_after, combined):
+                end = min(end, today)  # Trends can't look into the future
+                label = f"{term} ({window_label})" if window_label else term
+                if start >= end:
+                    print(f"Skipping {label}: that date window hasn't happened yet")
+                    continue
+                links.append((label, build_url(term, start, end, geo)))
     return links
 
 
@@ -98,12 +116,14 @@ def main() -> None:
     parser.add_argument("--geo", default="GB", help="Country code (default: GB)")
     parser.add_argument("--before", type=int, default=MONTHS_BEFORE, help="Months before release (default: 3)")
     parser.add_argument("--after", type=int, default=MONTHS_AFTER, help="Months after release (default: 6)")
+    parser.add_argument("--combined", action="store_true",
+                        help="One link per term covering before + after, instead of separate before and after links")
     parser.add_argument("--delay", type=float, default=2.0, help="Seconds between opening tabs (default: 2)")
     parser.add_argument("--no-open", action="store_true", help="Only write link.txt, don't open the browser")
     args = parser.parse_args()
 
     games = read_games(args.csv)
-    links = make_links(games, args.geo, args.before, args.after)
+    links = make_links(games, args.geo, args.before, args.after, args.combined)
     if not links:
         print("No links were made. Is games.csv filled in?")
         return
