@@ -9,3 +9,13 @@ Relevenent needed data is: Game Name, Steam ID, Publisher name, Publisher name
 
 A tool that displays the divergences between consumer popularity and publisher market valuation, measured using historical gaming and financial data.
 
+
+Website desing:
+Dark mode button.
+Main page, Info page
+Block:
+- Name
+- Alpha Release Data
+- Publishers name
+- Graph
+  - 
