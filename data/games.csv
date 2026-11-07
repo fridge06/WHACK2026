@@ -1,21 +1,20 @@
-﻿game_name,publisher_name,company_stock_ticker,alpha_release_date
-Cyberpunk 2077,CD PROJEKT RED,CDR.WA,2020-12-10
-Hogwarts Legacy,Warner Bros. Games,WBD,2023-02-10
-Assassin's Creed Shadows,Ubisoft,UBI.PA,2025-03-20
-Red Dead Redemption 2,Rockstar Games,TTWO,2018-10-26
-GTA V,Rockstar Games,TTWO,2013-09-17
-The Witcher 3,CD PROJEKT RED,CDR.WA,2015-05-19
-Elden Ring,Bandai Namco Entertainment,7832.T,2022-02-25
-Ghost of Tsushima,Sony Interactive Entertainment,SONY,2020-07-17
-Resident Evil 4,Capcom,9697.T,2023-03-24
-Final Fantasy XVI,Square Enix,9684.T,2023-06-22
-Assassin's Creed Valhalla,Ubisoft,UBI.PA,2020-11-10
-Far Cry 6,Ubisoft,UBI.PA,2021-10-07
-Forza Horizon 5,Xbox Game Studios,MSFT,2021-11-09
-Diablo IV,Blizzard Entertainment,MSFT,2023-06-06
-DOOM Eternal,Bethesda Softworks,MSFT,2020-03-20
-Horizon Forbidden West,Sony Interactive Entertainment,SONY,2022-02-18
-God of War,Sony Interactive Entertainment,SONY,2018-04-20
-Horizon Zero Dawn,Sony Interactive Entertainment,SONY,2017-02-28
-Minecraft,Mojang Studios,MSFT,2011-11-18
-Subnautica,Unknown Worlds Entertainment,259960.KS,2014-12-16
+﻿game_name,steam_id,company_stock_ticker,alpha_release_date,publisher_name,yahoo_index
+Cyberpunk 2077,1091500,CDR.WA,10/12/2020,CD PROJEKT RED,^WIG20
+Hogwarts Legacy,990080,WBD,10/02/2023,Warner Bros. Games,^IXIC
+Assassin's Creed Shadows,3159330,UBI.PA,20/03/2025,Ubisoft,^FCHI
+Red Dead Redemption 2,1174180,TTWO,26/10/2018,Rockstar Games,^IXIC
+GTA V,271590,TTWO,17/09/2013,Rockstar Games,^IXIC
+The Witcher 3,292030,CDR.WA,19/05/2015,CD PROJEKT RED,^WIG20
+Elden Ring,1245620,7832.T,25/02/2022,Bandai Namco Entertainment,^N225
+Ghost of Tsushima,2215430,SONY,17/07/2020,Sony Interactive Entertainment,^NYA
+Resident Evil 4,2050650,9697.T,24/03/2023,Capcom,^N225
+Final Fantasy XVI,2515020,9684.T,22/06/2023,Square Enix,^N225
+Assassin's Creed Valhalla,2208920,UBI.PA,10/11/2020,Ubisoft,^FCHI
+Far Cry 6,2369390,UBI.PA,07/10/2021,Ubisoft,^FCHI
+Forza Horizon 5,1551360,MSFT,09/11/2021,Xbox Game Studios,^IXIC
+Diablo IV,2344520,MSFT,06/06/2023,Blizzard Entertainment,^IXIC
+DOOM Eternal,782330,MSFT,20/03/2020,Bethesda Softworks,^IXIC
+Horizon Forbidden West,2420110,SONY,18/02/2022,Sony Interactive Entertainment,^NYA
+God of War,1593500,SONY,20/04/2018,Sony Interactive Entertainment,^NYA
+Horizon Zero Dawn,1151640,SONY,28/02/2017,Sony Interactive Entertainment,^NYA
+Subnautica,264710,259960.KS,16/12/2014,Unknown Worlds Entertainment,^KS11
