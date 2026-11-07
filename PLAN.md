@@ -217,7 +217,7 @@ Port the prototype into `site/index.html`, `site/styles.css` and `site/app.js`, 
 
 **Chart**
 
-- Time axis spans `window.from` to `window.to`. Put ticks at the start of each month, labelled with the short month name (adding the year at January or at the first tick). Keep the vertical launch-day line labelled "Launch".
+- Time axis spans from the earlier of `window.from` and the first popularity `mid`, to the later of `window.to` and the last popularity `mid`, so every monthly point is on the chart (a launch on the 5th puts the last month's mid-point after `window.to`). The market lines still cover only the window. Put ticks at the start of each month, labelled with the short month name (adding the year at January or at the first tick). Keep the vertical launch-day line labelled "Launch".
 - Popularity: plot each month's point at its `mid` date, joined by a line with visible point markers and a light filled area beneath. Show `null` months as gaps, never as zero. Left-axis title from `meta.popularity_label`.
 - Market value: the daily `mv` line, the dashed `implied` line, and the shaded gap from launch onwards, as in the prototype.
 - Tooltip: hovering shows the date, that day's market value and implied value (noting "Market closed: last close shown" when `trading` is false), and the popularity value for that calendar month.

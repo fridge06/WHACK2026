@@ -8,6 +8,12 @@ months_after = 6         # ...and ends this many calendar months after launch
 [verdict]
 day = 30                 # days after launch at which the verdict gap is measured
 
+[market]
+# Longest allowed gap, in calendar days, between consecutive closes inside a game's
+# window (weekends are 3, long holidays up to about a week). Longer gaps mean missing
+# data or a delisting, and the game is excluded rather than carrying a stale price.
+max_price_gap_days = 10
+
 [site]
 games_per_view = 6       # games picked at random on each page load
 popularity_label = "Popularity (launch month = 100)"

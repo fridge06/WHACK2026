@@ -75,3 +75,123 @@ def load_game_list(path: Path) -> pd.DataFrame:
         unique.append(gid)
     df["game_id"] = unique
     return df.set_index("game_id")
+
+
+# ---------------------------------------------------------------------------
+# Full inputs (PLAN.md 4.1) -> internal format
+# ---------------------------------------------------------------------------
+
+NUMERIC_GAME_COLUMNS = ["shares_outstanding", "gbp_per_local"]
+
+
+def load_games(path: Path) -> pd.DataFrame:
+    """Game metadata indexed by game_id, with every PLAN.md 4.1 column present.
+
+    Missing text columns become "", missing or unparseable numbers become NaN
+    (the game is then excluded downstream with a reason, not here).
+    """
+    games = load_game_list(path)
+    for col in GAME_COLUMNS[1:]:
+        if col not in games.columns:
+            games[col] = ""
+    for col in NUMERIC_GAME_COLUMNS:
+        games[col] = pd.to_numeric(games[col].astype(str).str.replace(",", "", regex=False), errors="coerce")
+    return games[GAME_COLUMNS[1:]]
+
+
+def _parse_signal_dates(dates: pd.Series, path: Path) -> pd.Series:
+    """Accept YYYY-MM-DD or YYYY-MM (the latter means the first of the month)."""
+    text = dates.astype(str).str.strip()
+    full = pd.to_datetime(text, format="%Y-%m-%d", errors="coerce")
+    month = pd.to_datetime(text, format="%Y-%m", errors="coerce")
+    parsed = full.fillna(month)
+    bad = text[parsed.isna()]
+    if not bad.empty:
+        raise ValueError(f"{path}: signal dates must be YYYY-MM-DD or YYYY-MM; e.g. {bad.unique()[:5].tolist()}")
+    return parsed
+
+
+def load_signals(path: Path, signal_cfg: dict, game_ids=None) -> pd.DataFrame:
+    """Long-format signals -> columns game_id, month (Period[M]), signal, value.
+
+    Only configured signals are kept (others are warned about). Daily signals are
+    rolled up to calendar months per their configured rollup; monthly signals pass
+    through. Blank or non-numeric values are unknown and dropped, never zero.
+    """
+    raw = pd.read_csv(path, encoding="utf-8-sig", dtype=str, keep_default_na=False)
+    raw.columns = [c.strip() for c in raw.columns]
+    missing = [c for c in ("game_id", "date", "signal", "value") if c not in raw.columns]
+    if missing:
+        raise ValueError(f"{path}: signals file is missing column(s) {missing}; found {list(raw.columns)}")
+
+    df = pd.DataFrame({
+        "game_id": raw["game_id"].str.strip(),
+        "signal": raw["signal"].str.strip(),
+        "date": _parse_signal_dates(raw["date"], path) if len(raw) else pd.Series(dtype="datetime64[ns]"),
+        "value": pd.to_numeric(raw["value"].str.strip(), errors="coerce"),
+    })
+    df = df[df["value"].notna()]
+
+    unknown = sorted(set(df["signal"]) - set(signal_cfg))
+    if unknown:
+        log.warning("signals in %s but not in config (ignored): %s", path.name, ", ".join(unknown))
+    if game_ids is not None:
+        stray = sorted(set(df["game_id"]) - set(game_ids))
+        if stray:
+            log.warning("signals for game_ids not in the game list (ignored): %s", ", ".join(stray))
+        df = df[df["game_id"].isin(game_ids)]
+
+    df = df.assign(month=df["date"].dt.to_period("M"))
+    parts = []
+    for name, s in signal_cfg.items():
+        part = df[df["signal"] == name]
+        if part.empty:
+            log.warning("configured signal %r has no data in %s", name, path.name)
+            continue
+        keys = ["game_id", "month"]
+        if s["granularity"] == "daily":
+            dupes = part.duplicated(["game_id", "date"])
+            if dupes.any():
+                log.warning("signal %r: %d duplicate daily rows; keeping the last", name, int(dupes.sum()))
+                part = part.drop_duplicates(["game_id", "date"], keep="last")
+            rolled = part.groupby(keys)["value"].agg(s["rollup"])
+        else:
+            dupes = part.duplicated(keys)
+            if dupes.any():
+                log.warning("signal %r: %d duplicate monthly rows; using their mean", name, int(dupes.sum()))
+            rolled = part.groupby(keys)["value"].mean()
+        parts.append(rolled.reset_index().assign(signal=name))
+
+    if not parts:
+        return pd.DataFrame({"game_id": pd.Series(dtype=str), "month": pd.Series(dtype="period[M]"),
+                             "signal": pd.Series(dtype=str), "value": pd.Series(dtype=float)})
+    return pd.concat(parts, ignore_index=True)[["game_id", "month", "signal", "value"]]
+
+
+def load_prices(path: Path) -> pd.DataFrame:
+    """Daily closes -> columns symbol, date (datetime64), close (float), sorted.
+
+    Rows with a missing or non-positive close are dropped with a warning.
+    """
+    raw = pd.read_csv(path, encoding="utf-8-sig", dtype=str, keep_default_na=False)
+    raw.columns = [c.strip() for c in raw.columns]
+    missing = [c for c in ("symbol", "date", "close") if c not in raw.columns]
+    if missing:
+        raise ValueError(f"{path}: prices file is missing column(s) {missing}; found {list(raw.columns)}")
+    df = pd.DataFrame({
+        "symbol": raw["symbol"].str.strip(),
+        "date": pd.to_datetime(raw["date"].str.strip(), format="%Y-%m-%d", errors="coerce"),
+        "close": pd.to_numeric(raw["close"].str.strip(), errors="coerce"),
+    })
+    bad_date = df["date"].isna()
+    if bad_date.any():
+        raise ValueError(f"{path}: price dates must be YYYY-MM-DD; e.g. {raw.loc[bad_date, 'date'].unique()[:5].tolist()}")
+    bad = df["close"].isna() | (df["close"] <= 0)
+    if bad.any():
+        log.warning("%s: dropping %d rows with a missing or non-positive close", path.name, int(bad.sum()))
+        df = df[~bad]
+    dupes = df.duplicated(["symbol", "date"])
+    if dupes.any():
+        log.warning("%s: %d duplicate symbol/date rows; keeping the last", path.name, int(dupes.sum()))
+        df = df.drop_duplicates(["symbol", "date"], keep="last")
+    return df.sort_values(["symbol", "date"]).reset_index(drop=True)
