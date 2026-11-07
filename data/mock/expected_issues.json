@@ -1,0 +1,23 @@
+{
+  "placeholder": true,
+  "seed": 2026,
+  "game_list": "data/games.csv",
+  "excluded": {
+    "hogwarts_legacy": "share price stops 45 days after launch (delisted)",
+    "grand_theft_auto_v": "no signal data in the launch month (no base month)"
+  },
+  "gaps": {
+    "elden_ring": [
+      "signal mock_reviews missing entirely"
+    ],
+    "diablo_iv": [
+      "signal mock_posts missing at month offset(s) [1, 5]"
+    ],
+    "the_witcher_3_wild_hunt": [
+      "signal mock_posts missing at month offset(s) [4, 5]"
+    ],
+    "horizon_forbidden_west": [
+      "signal mock_posts missing at month offset(s) [-1, 5]"
+    ]
+  }
+}
