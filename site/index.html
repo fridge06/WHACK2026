@@ -4,13 +4,66 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Launch Day Alpha</title>
+<meta name="description" content="How players' interest in a big game launch lines up with the publisher's market value, using historical data.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%231C1C1E'/%3E%3Cpath d='M5 24 L12 15 L18 19 L27 8' fill='none' stroke='%23FF6B61' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
+<script>
+  // Apply a saved theme before first paint to avoid a flash. Storage may be unavailable.
+  try {
+    var savedTheme = localStorage.getItem("lda-theme");
+    if (savedTheme === "light" || savedTheme === "dark") document.documentElement.setAttribute("data-theme", savedTheme);
+  } catch (e) {}
+</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="styles.css">
+<script src="app.js" defer></script>
 </head>
 <body>
-<main class="wrap">
-  <h1>Launch Day Alpha</h1>
-  <p>Site scaffold. The chart arrives in milestone 5.</p>
-</main>
-<script src="app.js"></script>
+<div class="wrap">
+  <header class="site-header">
+    <div>
+      <p class="brand">Launch Day Alpha</p>
+      <p class="lede">When a game opens a new world, players flood in. Does the company behind it gain or lose value?</p>
+    </div>
+    <div class="header-actions">
+      <span class="badge" id="badge" hidden>Placeholder data</span>
+      <button class="theme-toggle" id="themeToggle" type="button">Dark mode</button>
+    </div>
+  </header>
+
+  <nav class="menu" aria-label="Game launches">
+    <div class="tabs" id="tabs" role="tablist" aria-label="Game launches"></div>
+  </nav>
+
+  <main class="stage" id="stage">
+    <div class="status" id="status">Loading…</div>
+
+    <div id="content" hidden>
+      <div id="copy">
+        <h1 class="title" id="title"></h1>
+        <p class="meta" id="meta"></p>
+        <p class="verdict" id="verdict"></p>
+      </div>
+
+      <div class="chart" id="chart">
+        <svg id="svg" role="img" aria-labelledby="svgDesc"><desc id="svgDesc"></desc></svg>
+        <div class="tooltip" id="tooltip" aria-hidden="true"></div>
+      </div>
+
+      <ul class="legend">
+        <li><span class="key key-pop"></span><span><span id="legendPop">Popularity</span>, left axis</span></li>
+        <li><span class="key key-mv"></span><span>Market value, right axis</span></li>
+        <li><span class="key key-bench"></span>Value if it had moved with its market index</li>
+        <li><span class="key key-gap"></span>Value the launch created or lost</li>
+      </ul>
+      <p class="sources" id="sources"></p>
+    </div>
+  </main>
+
+  <footer>
+    <p class="note" id="note"></p>
+  </footer>
+</div>
 </body>
 </html>
