@@ -5,6 +5,8 @@ Relevenent needed data is: Game Name, Steam ID, Publisher name, Publisher name
 
 A tool that displays the divergences between consumer popularity and publisher market valuation, measured using historical gaming and financial data.
 
+"New Worlds" is a common button in games
+
 
 Website desing:
 Dark mode button.
