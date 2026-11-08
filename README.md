@@ -80,7 +80,7 @@ The build prints which games were excluded and why.
 
 - **Launch month = 100, not launch day.** Popularity is monthly, so the launch month's value mixes days before and after launch.
 - **Partial months.** A daily signal that only exists from launch day (e.g. reviews) covers part of the launch month, so the next month can index above 100.
-- **Stale prices.** If two consecutive closes inside a game's window are more than `max_price_gap_days` (default 10) calendar days apart, or prices stop before the window ends, the game is excluded rather than showing a carried-forward price.
+- **Stale prices.** If two consecutive closes inside a game's window are more than `max_price_gap_days` (default 14) calendar days apart, or prices stop before the window ends, the game is excluded rather than showing a carried-forward price.
 - **% change, not £.** Market value is the % change since launch day, which equals the change in the share price as long as the number of shares stays the same (it barely moves over a few months). Yahoo's prices are adjusted for stock splits, so splits don't distort it.
 - **Currency of the index.** If the index is quoted in a different currency from the share price (e.g. `CDR.WA` in PLN against `^STOXX` in EUR), currency moves show up in the comparison. The fetch report flags these.
 - **Uneven signal coverage.** Steam only covers games that were on Steam at launch, and Wikipedia pageviews start in July 2015. Games without them use the signals they have (weights rescale).
@@ -95,7 +95,7 @@ Open questions (defaults are configurable in `pipeline/config.toml`):
 | Google Trends region | Worldwide (`trends_geo = ""`) |
 | Ticker and index per game | From `data/games.csv`; game excluded with a reason if missing |
 | Verdict horizon | 30 days |
-| Longest acceptable gap between closes | 10 calendar days |
+| Longest acceptable gap between closes | 14 calendar days |
 | Number of games shown per load | 6 |
 
 Serve the site locally (opening `index.html` directly won't work, because `fetch` is blocked on `file://`):

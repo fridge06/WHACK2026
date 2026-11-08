@@ -377,16 +377,22 @@ def _text(row: pd.Series, col: str) -> str:
 def run(cfg: dict, list_path: Path, out_dir: Path, sources: set[str], game_ids: list[str] | None = None,
         refresh: bool = False) -> dict:
     """Fetch what's needed and write games.csv, signals.csv, prices.csv to out_dir.
-    Returns a report {game_id: {"notes": [...], "counts": {...}}}."""
+
+    game_ids limits which games are fetched; the output always covers every game in
+    the list, using the cache for the rest. Returns a report
+    {game_id: {"notes": [...], "counts": {...}}}."""
     games = load_game_list(list_path)
+    selected = set(games.index)
     if game_ids:
         unknown = sorted(set(game_ids) - set(games.index))
         if unknown:
             raise ValueError(f"unknown game id(s): {', '.join(unknown)}; ids are: {', '.join(games.index)}")
-        games = games.loc[game_ids]
+        selected = set(game_ids)
 
     cache = Cache(ROOT / cfg["fetch"]["cache_dir"])
-    f = Fetcher(cfg, cache, sources, refresh)
+    f_net = Fetcher(cfg, cache, sources, refresh)
+    f_cache = Fetcher(cfg, cache, set(), refresh=False)
+    fetcher_for = lambda gid: f_net if gid in selected else f_cache
     before, after = cfg["window"]["months_before"], cfg["window"]["months_after"]
     today = pd.Timestamp.today().normalize()
 
@@ -409,6 +415,7 @@ def run(cfg: dict, list_path: Path, out_dir: Path, sources: set[str], game_ids: 
     price_data, price_errors = {}, {}
     for sym, uses in need.items():
         start, end = min(u[1] for u in uses), max(u[2] for u in uses)
+        f = f_net if any(gid in selected for gid, *_ in uses) else f_cache
         try:
             price_data[sym] = f.prices(sym, start, end)
         except FetchError as err:
@@ -420,6 +427,7 @@ def run(cfg: dict, list_path: Path, out_dir: Path, sources: set[str], game_ids: 
     say("Popularity")
     for gid, g in games.iterrows():
         notes, counts = report[gid]["notes"], report[gid]["counts"]
+        f = fetcher_for(gid)
         launch = g["launch_date"]
         w_from, w_to, f_from, f_to = spans[gid]
         symbol, bench = _text(g, "price_symbol"), _text(g, "benchmark_symbol")

@@ -159,6 +159,21 @@ def test_cache_only_run_produces_buildable_inputs(tmp_path):
     assert g["city"] == "Warsaw" and g["ticker"] == "CDR"
 
 
+def test_games_option_limits_fetching_not_output(tmp_path):
+    cfg = copy.deepcopy(load_config())
+    cfg["fetch"]["cache_dir"] = str(tmp_path / "cache")
+    seed_cache(fetch.Cache(tmp_path / "cache"))
+    game_list = tmp_path / "list.csv"
+    game_list.write_text(
+        "game_name,publisher_name,alpha_release_date,ticker,index,steam_appid\n"
+        "Cyberpunk 2077,CD PROJEKT RED,2020-12-10,CDR.WA,^STOXX,1091500\n"
+        "Rust,Facepunch Studios,2013-12-11,,,\n", encoding="utf-8")
+    # Ask to fetch only Rust with no sources enabled: Cyberpunk must still come out of the cache.
+    fetch.run(cfg, game_list, tmp_path / "raw", sources=set(), game_ids=["rust"])
+    assert set(load_games(tmp_path / "raw" / "games.csv").index) == {"cyberpunk_2077", "rust"}
+    assert "cyberpunk_2077" in set(pd.read_csv(tmp_path / "raw" / "signals.csv")["game_id"])
+
+
 def test_real_build_without_fetched_files_points_to_fetch(tmp_path):
     cfg = copy.deepcopy(load_config())
     cfg["paths"]["raw_dir"] = str(tmp_path)
