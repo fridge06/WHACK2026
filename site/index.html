@@ -28,6 +28,7 @@
     </div>
     <div class="header-actions">
       <span class="badge" id="badge" hidden>Placeholder data</span>
+      <button class="theme-toggle" id="shuffle" type="button" hidden>Shuffle games</button>
       <button class="theme-toggle" id="themeToggle" type="button">Dark mode</button>
     </div>
   </header>
@@ -44,6 +45,7 @@
         <h1 class="title" id="title"></h1>
         <p class="meta" id="meta"></p>
         <p class="verdict" id="verdict"></p>
+        <p class="trade" id="trade"></p>
       </div>
 
       <div class="chart" id="chart">
@@ -58,6 +60,17 @@
         <li><span class="key key-gap"></span>Value the launch created or lost, relative to its market</li>
       </ul>
       <p class="sources" id="sources"></p>
+
+      <section class="method" aria-labelledby="methodTitle">
+        <h2 id="methodTitle">Sources and method</h2>
+        <ul>
+          <li><b>Popularity</b> combines <span id="methodSignals"></span>. Each source is indexed so the launch month is 100, then averaged over the sources available that month.</li>
+          <li><b>Market value</b> comes from daily closing share prices on <a href="https://finance.yahoo.com/" rel="noopener">Yahoo Finance</a>, shown as the % change since launch day.</li>
+          <li><b>Its market</b> is the stock market index the company is measured against (for example the Nikkei 225 for Tokyo listings). The dashed line shows how the company&rsquo;s value would have moved if it had simply tracked that index.</li>
+          <li><b>The verdict</b> is the gap between the two lines <span id="methodDay">30</span> days after launch: how far the company moved beyond what its market did.</li>
+          <li><b>Hindsight trades</b> show what buying the shares and shorting the index at the launch-day close (or the reverse) would have made over the same period, which is roughly the gap. They ignore trading costs and illustrate the data; they are not investment advice.</li>
+        </ul>
+      </section>
     </div>
   </main>
 

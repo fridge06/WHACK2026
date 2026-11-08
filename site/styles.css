@@ -81,7 +81,7 @@ code { font-family: ui-monospace, SFMono-Regular, Consolas, monospace; font-size
 }
 .brand { font-weight: 700; font-size: 1.25rem; margin: 0; }
 .lede { color: var(--muted); margin: 2px 0 0; max-width: 58ch; }
-.header-actions { display: flex; align-items: center; gap: 10px; }
+.header-actions { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
 .badge {
   border: 1px solid var(--line); border-radius: 6px; padding: 3px 10px;
   font-size: 0.8rem; color: var(--muted); white-space: nowrap;
@@ -113,6 +113,8 @@ code { font-family: ui-monospace, SFMono-Regular, Consolas, monospace; font-size
 .meta { color: var(--muted); margin: 10px 0 0; }
 .verdict { font-size: clamp(1.05rem, 2vw, 1.25rem); margin: 10px 0 0; max-width: 56ch; line-height: 1.45; }
 .verdict strong { font-weight: 700; }
+.trade { color: var(--muted); margin: 8px 0 0; max-width: 62ch; }
+.trade b { color: var(--ink); font-weight: 500; }
 
 .swap { animation: swapIn 0.4s ease both; }
 @keyframes swapIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
@@ -157,6 +159,14 @@ code { font-family: ui-monospace, SFMono-Regular, Consolas, monospace; font-size
 .key-gap { background: var(--gap); }
 
 .sources { color: var(--muted); font-size: 0.8rem; margin: 10px 0 0; }
+
+.method { margin-top: 28px; padding-top: 16px; border-top: 1px solid var(--line); max-width: 80ch; }
+.method h2 { font-size: 1rem; font-weight: 500; margin: 0 0 8px; }
+.method ul { margin: 0; padding-left: 1.1em; color: var(--muted); font-size: 0.875rem; }
+.method li { margin: 0 0 6px; }
+.method b { color: var(--ink); font-weight: 500; }
+.method a { color: inherit; text-decoration: underline; text-underline-offset: 2px; }
+.method a:hover { color: var(--ink); }
 .note { color: var(--muted); font-size: 0.8rem; margin: 28px 0 0; padding-top: 16px; border-top: 1px solid var(--line); max-width: 80ch; }
 
 @media (max-width: 480px) {

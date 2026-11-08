@@ -82,6 +82,14 @@
   }
   const setKey = (games) => games.map((g) => g.id).sort().join(",");
 
+  // A random set of n, trying once more if it matches the set to avoid.
+  function randomSet(all, n, avoidKey) {
+    let pick = shuffle(all).slice(0, n);
+    if (all.length > n && setKey(pick) === avoidKey) pick = shuffle(all).slice(0, n);
+    store.set(KEY_LAST_SET, setKey(pick));
+    return pick;
+  }
+
   function pickGames(all, n) {
     // ?games=id1,id2 lets a presenter choose the games (in that order).
     const requested = (new URLSearchParams(window.location.search).get("games") || "")
@@ -91,11 +99,8 @@
       const chosen = [...new Set(requested)].map((id) => byId.get(id)).filter(Boolean);
       if (chosen.length) return chosen;
     }
-    let pick = shuffle(all).slice(0, n);
     // Best effort: avoid showing exactly the same set as last visit.
-    if (all.length > n && setKey(pick) === store.get(KEY_LAST_SET)) pick = shuffle(all).slice(0, n);
-    store.set(KEY_LAST_SET, setKey(pick));
-    return pick;
+    return randomSet(all, n, store.get(KEY_LAST_SET));
   }
 
   function prepare(g) {
@@ -123,6 +128,28 @@
     return `${lead}: ${move(v.pct, "up", "down")}, while its market ${move(v.implied_pct, "rose", "fell")}.`;
   }
 
+  // What a trade placed at the launch-day close would have made by the verdict day:
+  // long the shares and short the index if the company beat its market, the reverse
+  // if it lagged. That pair trade earns roughly the gap.
+  const SMALL_GAP = 2; // percentage points; below this the launch barely moved the company
+  function horizon(day) {
+    return day === 7 ? "a week" : day === 30 ? "a month" : `${day} days`;
+  }
+  function tradeHtml(g) {
+    const v = g.verdict;
+    const pub = escapeHtml(g.publisher);
+    const span = horizon(v.day);
+    if (Math.abs(v.gap_pct) < SMALL_GAP) {
+      return `<b>Hindsight trade:</b> the launch barely moved ${pub}’s shares against its market, ` +
+        `so a launch-day bet either way would have made almost nothing.`;
+    }
+    const gain = `<b>about ${nf1.format(Math.abs(v.gap_pct))}%</b>`;
+    const legs = v.gap_pct > 0
+      ? `buying ${pub}’s shares and shorting its market index`
+      : `shorting ${pub}’s shares and buying its market index`;
+    return `<b>Hindsight trade:</b> ${legs} at launch would have made ${gain} in ${span}, before costs.`;
+  }
+
   function metaLine(g) {
     let s = `Published by ${g.publisher}.`;
     if (g.ticker) s += ` Listed ${g.city ? "in " + g.city + " " : ""}as ${g.ticker}.`;
@@ -134,6 +161,7 @@
     $("title").textContent = g.name;
     $("meta").textContent = metaLine(g);
     $("verdict").innerHTML = verdictHtml(g);
+    $("trade").innerHTML = tradeHtml(g);
     const labels = new Map(META.signals.map((s) => [s.id, s.label]));
     $("sources").textContent = "Popularity for this game combines: " + g.signals_used.map((id) => labels.get(id) || id).join(", ") + ".";
     if (animate && !reduceMotion) {
@@ -448,6 +476,38 @@
     $("note").textContent = parts.join(" ");
   }
 
+  // Known sources get a link in the method section; others are listed by label.
+  const SIGNAL_LINKS = {
+    google_trends: "https://trends.google.com/",
+    steam_reviews: "https://store.steampowered.com/",
+    wikipedia_views: "https://pageviews.wmcloud.org/",
+  };
+  function setMethod() {
+    const items = META.signals.map((s) => {
+      const label = escapeHtml(s.label);
+      const link = SIGNAL_LINKS[s.id];
+      return link ? `<a href="${link}" rel="noopener">${label}</a>` : label;
+    });
+    const list = items.length > 1 ? items.slice(0, -1).join(", ") + " and " + items[items.length - 1] : items[0];
+    $("methodSignals").innerHTML = list;
+    $("methodDay").textContent = META.verdict_day;
+  }
+
+  function setupShuffle(all, n) {
+    const btn = $("shuffle");
+    if (all.length <= n) return; // nothing to shuffle
+    btn.hidden = false;
+    btn.addEventListener("click", () => {
+      GAMES = randomSet(all, n, setKey(GAMES)).map(prepare);
+      // Drop a presenter's ?games= so a refresh doesn't bring the old set back.
+      if (window.location.search) {
+        try { window.history.replaceState(null, "", window.location.pathname); } catch (e) { /* ignore */ }
+      }
+      buildMenu();
+      show(0, true);
+    });
+  }
+
   async function init() {
     setupTheme();
     let data;
@@ -465,8 +525,11 @@
     $("badge").hidden = !META.placeholder;
     $("legendPop").textContent = META.popularity_label;
     setNote();
+    setMethod();
 
-    GAMES = pickGames(data.games, META.games_per_view || 6).map(prepare);
+    const perView = META.games_per_view || 6;
+    GAMES = pickGames(data.games, perView).map(prepare);
+    setupShuffle(data.games, perView);
     buildMenu();
     $("status").hidden = true;
     $("content").hidden = false;
